@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Örnek Demo</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      background-color: #e0e0e0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Game Örnek Demo</h1>
+    <og-ornek mode="levels" levelCount="5"></og-ornek>
+  </div>
+  <script type="module">
+    import '../src/index.ts';
+
+    const game = document.querySelector('og-ornek');
+    
+    game.addEventListener('og-ready', (e) => console.log('Ready:', e.detail));
+    game.addEventListener('og-level-start', (e) => console.log('Level Start:', e.detail));
+    game.addEventListener('og-level-complete', (e) => console.log('Level Complete:', e.detail));
+    game.addEventListener('og-state-change', (e) => console.log('State Change:', e.detail));
+  </script>
+</body>
+</html>
