@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hafıza – og-hafiza Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      background: radial-gradient(ellipse at 30% 20%, #1e1046 0%, #0a0a18 60%);
+      font-family: 'Inter', system-ui, sans-serif;
+      padding: 1.5rem;
+    }
+
+    header {
+      text-align: center;
+    }
+    header h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #a78bfa;
+      opacity: .8;
+    }
+
+    og-hafiza {
+      --og-font: 'Inter', system-ui, sans-serif;
+      --og-bg: #0d0d1a;
+      --og-surface: #12122a;
+      --og-primary: #a78bfa;
+      --og-accent: #c4b5fd;
+      --og-text: #e8e8f0;
+      --og-radius: 16px;
+
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 0 60px rgba(124, 58, 237, 0.2), 0 0 0 1px rgba(167,139,250,.15);
+    }
+
+    #event-log {
+      width: 100%;
+      max-width: 420px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px;
+      padding: .75rem 1rem;
+      font-size: .75rem;
+      color: rgba(200,200,220,.6);
+      font-family: 'Courier New', monospace;
+      max-height: 110px;
+      overflow-y: auto;
+    }
+    #event-log p { margin: .1rem 0; }
+    #event-log .ts { color: #7c3aed; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Octapull Games · Hafıza</h1>
+  </header>
+
+  <og-hafiza id="game" mode="levels" levelCount="8"></og-hafiza>
+
+  <div id="event-log" aria-live="polite" aria-label="Oyun olay günlüğü"></div>
+
+  <script type="module">
+    import '../src/index.ts';
+
+    const game = document.getElementById('game');
+    const log  = document.getElementById('event-log');
+
+    function addLog(name, detail) {
+      const p = document.createElement('p');
+      const t = new Date().toLocaleTimeString('tr-TR');
+      p.innerHTML = `<span class="ts">${t}</span> <b>${name}</b> ${JSON.stringify(detail)}`;
+      log.prepend(p);
+    }
+
+    // Restore state from sessionStorage between reloads (demo only)
+    const saved = sessionStorage.getItem('hafiza-state');
+    if (saved) {
+      try { game.gameState = JSON.parse(saved); } catch(_) {}
+    }
+
+    ['og-ready','og-level-start','og-level-complete','og-level-fail','og-game-complete'].forEach(ev => {
+      game.addEventListener(ev, e => addLog(e.type, e.detail));
+    });
+
+    game.addEventListener('og-state-change', e => {
+      sessionStorage.setItem('hafiza-state', JSON.stringify(e.detail.state));
+      addLog('og-state-change', { level: e.detail.state.currentLevel });
+    });
+  </script>
+</body>
+</html>
