@@ -1,8 +1,8 @@
 # game-octapus — Octapus
 
 `og-octapus` etiketiyle kullanılan bir yol bulma (maze) oyunu. Ahtapot
-karakteri, ızgara üzerindeki labirentte başlangıç hücresinden sağ alt
-köşedeki çıkış kapısına ulaşmaya çalışır.
+karakteri, ızgara üzerindeki labirentte başlangıç hücresinden bir
+gider kapağına (logar) ulaşmaya çalışır.
 
 ## Kurallar
 - Oyuncu bulunduğu hücreden bir yöne (yatay ya da dikey) tıklar/dokunur;
@@ -12,31 +12,48 @@ köşedeki çıkış kapısına ulaşmaya çalışır.
 - Labirent çok sayıda çıkmaz sokak içerir: yanlış bir kola girmek mümkündür,
   ama duvardan geçilemeyeceği için oyuncu asla "geçersiz" bir hamle
   yapamaz — sadece geri dönüp doğru yolu bulması gerekir.
-- Kapıya (🚪) ulaşınca tur tamamlanır (`og-level-complete`); can/kalp
+- Gider kapağına ulaşınca tur tamamlanır (`og-level-complete`); can/kalp
   mekaniği yoktur, başarı ölçütü hamle sayısı ve süredir.
-- Üstteki ilerleme çubuğu, oyuncunun kapıya olan labirent-mesafesi
+- Üstteki ilerleme çubuğu, oyuncunun gider kapağına olan labirent-mesafesi
   (grafik mesafesi) üzerinden hesaplanan yakınlığı gösterir.
+
+## Kazanma Animasyonu
+Ahtapot gider kapağının hücresine ulaştığı an kontroller kilitlenir
+(fare/dokunmatik/klavye girdisi yoksayılır). Ardından sırasıyla: kapak
+kendi ekseninde dönüp küçülerek kayar, altından simsiyah bir delik
+belirir, ahtapot da küçülüp saydamlaşarak deliğe süzülür. Bu görsel
+dizinin toplam süresi ~1.2 saniyedir; bitiminde istatistikler
+hesaplanır ve "Tebrikler!" modalı açılır — süre kaydı animasyon değil,
+kapağa ulaşılan an baz alınarak tutulur. `prefers-reduced-motion`
+açıkken animasyon anında (gecikmesiz) tamamlanır.
 
 ## Zorluk Eğrisi
 `levelCount` parametresine göre ölçeklenir; labirent kare bir ızgaradır (n×n):
-- Seviye 1 → 5×5
-- Son seviye → 13×13
-- `random` modu → sabit 9×9
+- Seviye 1 → 10×10
+- Son seviye → 15×15
+- `random` modu → sabit 13×13
 
-Başlangıç hep sol üst köşe (0,0), çıkış kapısı hep sağ alt köşedir
-(n-1, n-1); zorluk boyuttan ve labirentin çıkmaz sokak yoğunluğundan gelir.
+Başlangıç ve gider kapağı her turda ızgaranın rastgele iki köşesine
+(çapraz karşılıklı) yerleştirilir — aynı köşe çiftinde sabit kalmaz,
+turdan tura yer değiştirirler; zorluk boyuttan ve labirentin çıkmaz
+sokak yoğunluğundan gelir.
 
 ## Üretim Yöntemi
-Her labirent, ızgara üzerinde **rastgele Prim algoritması**
-(randomized Prim's) ile üretilir: başlangıç hücresinden büyüyen bir
-"sınır" (frontier) kenar listesinden rastgele bir kenar seçilip labirente
-eklenir. Bu algoritma da (recursive backtracker gibi) ızgaranın bir
-yayılma ağacını (spanning tree) oluşturur; bu nedenle herhangi iki hücre
-arasında **tam olarak bir** yol vardır ve üretilen her labirent tanım
-gereği çözülebilirdir — ayrı bir çözücü doğrulaması gerekmez. DFS tabanlı
-üretimden farklı olarak Prim's, tek uzun dolambaçlı bir koridor yerine
-çok sayıda kısa çıkmaz sokak ve dallanma noktası üretir; asıl bulmaca
-hissini veren de budur.
+Her labirent, ızgara üzerinde büyüyen bir ağaç (growing-tree) algoritmasıyla
+üretilir: başlangıç hücresinden büyüyen bir "sınır" (frontier) kenar
+listesinden bir kenar seçilip labirente eklenir. Bu algoritma ızgaranın
+bir yayılma ağacını (spanning tree) oluşturur; bu nedenle herhangi iki
+hücre arasında **tam olarak bir** yol vardır ve üretilen her labirent
+tanım gereği çözülebilirdir — ayrı bir çözücü doğrulaması gerekmez.
+
+Sınırdan hangi kenarın seçileceği moda göre değişir:
+- **levels**: tamamen rastgele seçim (randomized Prim's) — kısa, doğrudan
+  çözüm yollarına sahip, sığ ve çok sayıda çıkmaz sokak içeren bir doku
+  üretir.
+- **random**: seçim çoğunlukla en son eklenen kenarı uzatacak şekilde
+  yapılır (DFS'e yakın, dead-end-bias ağırlıklı) — daha uzun, dolambaçlı
+  koridorlar ve derin çıkmaz sokaklar üretir; yanlış dönüşlerin bedeli
+  daha ağırdır.
 
 İsteğe bağlı `seed` özelliği verildiğinde mulberry32 tabanlı tohumlu bir
 üreteç kullanılır: aynı seed + aynı seviye her zaman aynı labirenti
@@ -44,7 +61,7 @@ hissini veren de budur.
 
 ## Mod Desteği
 - **levels**: `levelCount` kadar seviye, boyut orantılanır.
-- **random**: Sabit 9×9 labirent, her turda yeni düzen. `bestTimes`
+- **random**: Sabit 13×13 labirent, her turda yeni düzen. `bestTimes`
   sözleşmeye uygun olarak tek anahtar (`0`) üzerinden tutulur;
   `currentLevel` kalıcı state'te daima `1`'dir.
 
@@ -86,6 +103,7 @@ adım adım beklemeden anında tamamlanır).
 ```
 
 ## Kullanılan Üçüncü Taraf Varlıklar
-Yok — karakter ve kapı işaretleri Unicode emoji'dir (🐙, 🚪); ses
-efektleri Web Audio API osilatörleriyle programatik üretilir, harici
-ses dosyası kullanılmaz.
+Yok — ahtapot karakteri Unicode emoji'dir (🐙); gider kapağı ise emoji
+değil, sıfırdan çizilmiş bir vektör (SVG) ikondur. Ses efektleri Web
+Audio API osilatörleriyle programatik üretilir, harici ses dosyası
+kullanılmaz.
