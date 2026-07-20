@@ -16,7 +16,7 @@
       align-items: center;
       justify-content: flex-start;
       gap: 1.25rem;
-      background: radial-gradient(ellipse at 30% 20%, #0e3a52 0%, #071018 60%);
+      background: #071018;
       font-family: 'Inter', system-ui, sans-serif;
       padding: 2rem 1.5rem 3rem;
     }
@@ -34,13 +34,11 @@
       opacity: .85;
     }
 
+    /* Colors are left to the component's own dark/light theme tokens
+       (toggled via the theme attribute/property) — the demo only pins
+       font and corner radius. */
     og-octapus {
       --og-font: 'Inter', system-ui, sans-serif;
-      --og-bg: #0b1220;
-      --og-surface: #f4f7fb;
-      --og-primary: #0066cc;
-      --og-accent: #ff9900;
-      --og-text: #eaf2ff;
       --og-radius: 16px;
 
       width: 100%;
@@ -55,6 +53,14 @@
       gap: .5rem;
       justify-content: center;
     }
+    /* Once play starts, #controls is moved into the game's own
+       "host-controls" slot, right next to its theme toggle — swap to
+       small icon-style buttons so the pair fits the HUD row. */
+    #controls.in-hud {
+      width: auto;
+      max-width: none;
+      gap: .35rem;
+    }
     #controls button {
       cursor: pointer;
       border: 1px solid rgba(255,255,255,.15);
@@ -65,6 +71,11 @@
       font-size: .8rem;
       font-weight: 600;
       transition: background .15s, border-color .15s, color .15s;
+    }
+    #controls.in-hud button {
+      padding: .3rem .55rem;
+      font-size: .75rem;
+      border-radius: 999px;
     }
     #toggle-mode.is-levels {
       border-color: rgba(0,102,204,.6);
@@ -160,6 +171,18 @@
     const modeHint = document.getElementById('mode-hint');
     game.addEventListener('og-level-start', () => { modeHint.style.display = 'none'; }, { once: true });
 
+    // #controls stays in its normal spot below the "Başla" screen; once play
+    // actually starts it's moved into the game's own "host-controls" slot,
+    // right next to the built-in theme toggle in the HUD.
+    const controls = document.getElementById('controls');
+    game.addEventListener('og-level-start', () => {
+      controls.setAttribute('slot', 'host-controls');
+      game.appendChild(controls);
+      controls.classList.add('in-hud');
+      updateModeButton();
+      updateMuteButton();
+    }, { once: true });
+
     game.addEventListener('og-state-change', (e) => {
       sessionStorage.setItem('octapus-state', JSON.stringify(e.detail.state));
       addLog('og-state-change', { level: e.detail.state.currentLevel });
@@ -170,13 +193,19 @@
 
     function updateModeButton() {
       const isLevels = game.mode === 'levels';
-      modeBtn.textContent = isLevels ? 'Mod Seç: Seviyeler' : 'Mod Seç: Rastgele';
+      const compact = controls.classList.contains('in-hud');
+      modeBtn.textContent = compact
+        ? (isLevels ? '🧩 Seviyeler' : '🎲 Rastgele')
+        : (isLevels ? 'Mod Seç: Seviyeler' : 'Mod Seç: Rastgele');
       modeBtn.classList.toggle('is-levels', isLevels);
       modeBtn.classList.toggle('is-random', !isLevels);
     }
 
     function updateMuteButton() {
-      muteBtn.textContent = game.muted ? 'Sesi Aç 🔇' : 'Sesi Kapat 🔊';
+      const compact = controls.classList.contains('in-hud');
+      muteBtn.textContent = compact
+        ? (game.muted ? '🔇' : '🔊')
+        : (game.muted ? 'Sesi Aç 🔇' : 'Sesi Kapat 🔊');
       muteBtn.classList.toggle('is-muted', game.muted);
       muteBtn.classList.toggle('is-unmuted', !game.muted);
     }

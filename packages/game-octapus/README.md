@@ -89,6 +89,33 @@ Odak `Tab` ile oyun tahtasına gelir; `prefers-reduced-motion` tercihine
 uyulur (sarsılma ve geçiş animasyonları kapanır, tıkla-yürü hareketi
 adım adım beklemeden anında tamamlanır).
 
+## Tema (Dark/Light)
+`theme` property'si (`'dark' | 'light'`, varsayılan `'dark'`) host uygulama
+tarafından set edilebilir ya da `theme` attribute'u ile başlangıç değeri
+verilebilir. HUD'daki 🌙/☀️ düğmesiyle kullanıcı da anlık geçiş yapabilir;
+bu durumda bileşen `theme` property'sini kendi içinde günceller ve
+sözleşmeye ek olarak `og-theme-change` event'ini (`{ gameId, theme }`)
+fırlatır — host bu tercihi kalıcılaştırmak isterse dinleyebilir. Arka plan,
+kart ve buton renkleri düz (gradyansız) tonlardır; her iki temada da
+`--og-bg`, `--og-surface`, `--og-primary`, `--og-accent`, `--og-text`
+değişkenlerinin makul varsayılanları vardır ve host sayfa bunları
+her zaman ezebilir.
+
+Oyun oynanırken görünen HUD şeridinde, tema düğmesinin hemen yanında
+`host-controls` adlı bir slot bulunur. Host sayfa kendi düğmelerini
+(mod seçimi, ses açma/kapama vb.) bu slota `slot="host-controls"`
+attribute'uyla yerleştirerek tema düğmesiyle aynı satırda gösterebilir:
+```html
+<og-octapus id="game">
+  <div slot="host-controls">
+    <button id="mode-btn">Mod Seç</button>
+    <button id="mute-btn">Sesi Aç/Kapat</button>
+  </div>
+</og-octapus>
+```
+Bu slot yalnızca oyun oynanırken (idle ekranı dışında) render edilen HUD
+içindedir; idle ekranında projekte edilen içerik görünmez.
+
 ## Entegrasyon Örneği
 ```html
 <og-octapus></og-octapus>

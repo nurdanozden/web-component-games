@@ -150,27 +150,77 @@ export class OctapusGame extends LitElement {
     :host {
       display: block;
       font-family: var(--og-font, system-ui, -apple-system, sans-serif);
-      background: var(--og-bg, #0b1220);
-      color: var(--og-text, #eaf2ff);
-      padding: 1.1rem;
+      --og-bg: #0b1220;
+      --og-surface: #f4f7fb;
+      --og-primary: #0066cc;
+      --og-accent: #ff9900;
+      --og-text: #eaf2ff;
+      box-sizing: border-box;
+      width: 100%;
+      background: var(--og-bg);
+      color: var(--og-text);
+      padding: 1.5rem;
       border-radius: var(--og-radius, 16px);
       min-width: 280px;
       user-select: none;
+      transition: background .2s ease, color .2s ease;
+    }
+
+    /* Light-theme token overrides — toggled via the theme property/attribute. */
+    :host([theme='light']) {
+      --og-bg: #f4f7fb;
+      --og-surface: #ffffff;
+      --og-primary: #0057b3;
+      --og-accent: #d97400;
+      --og-text: #16202e;
     }
 
     .hud {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
-      justify-content: flex-end;
+      justify-content: space-between;
+      gap: .5rem;
       margin-bottom: .6rem;
     }
+    .hud-left {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      min-width: 0;
+    }
+    /* Lets a host page project its own controls (mode switch, mute, etc.)
+       right next to the built-in theme toggle instead of elsewhere on the page. */
+    ::slotted(*) {
+      flex: none;
+    }
+    .theme-toggle {
+      cursor: pointer;
+      border: none;
+      border-radius: 999px;
+      width: 2rem;
+      height: 2rem;
+      flex: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      line-height: 1;
+      background: color-mix(in srgb, var(--og-text) 10%, transparent);
+      color: var(--og-text);
+      transition: background .15s, transform .15s;
+    }
+    .theme-toggle:hover { background: color-mix(in srgb, var(--og-text) 18%, transparent); }
+    .theme-toggle:active { transform: scale(.92); }
+    .theme-toggle:focus-visible { outline: 3px solid var(--og-accent, #ff9900); outline-offset: 2px; }
+
     .level-chip {
       font-size: .7rem;
       font-weight: 700;
       letter-spacing: .04em;
       text-transform: uppercase;
       opacity: .75;
-      background: rgba(255,255,255,.08);
+      background: color-mix(in srgb, var(--og-text) 8%, transparent);
       padding: .3rem .65rem;
       border-radius: 999px;
       white-space: nowrap;
@@ -179,26 +229,29 @@ export class OctapusGame extends LitElement {
     .progress-track {
       height: 10px;
       border-radius: 999px;
-      background: rgba(255,255,255,.08);
+      background: color-mix(in srgb, var(--og-text) 8%, transparent);
       overflow: hidden;
       margin-bottom: .9rem;
     }
     .progress-fill {
       height: 100%;
       border-radius: inherit;
-      background: linear-gradient(90deg, var(--og-accent, #ff9900), var(--og-primary, #0066cc));
+      background: var(--og-accent, #ff9900);
       transition: width .25s ease;
     }
 
     .board-wrap { display: flex; justify-content: center; }
     .maze {
       width: 100%;
-      max-width: min(640px, 88vw, 62vh);
+      max-width: min(640px, 100%);
       aspect-ratio: 1;
       background: var(--og-surface, #f4f7fb);
       border-radius: calc(var(--og-radius, 16px) * .6);
       touch-action: none;
       cursor: pointer;
+    }
+    :host([theme='light']) .maze {
+      border: 1px solid color-mix(in srgb, var(--og-text) 12%, transparent);
     }
     .maze:focus-visible { outline: 3px solid var(--og-accent, #ff9900); outline-offset: 2px; }
     .maze.shake { animation: shake .32s ease; }
@@ -284,11 +337,12 @@ export class OctapusGame extends LitElement {
       padding: 2rem 1.5rem;
       border-radius: calc(var(--og-radius, 16px) * 1.1);
       background: var(--og-bg, #0b1220);
-      border: 1px solid rgba(255,255,255,.14);
+      border: 1px solid color-mix(in srgb, var(--og-text) 14%, transparent);
       box-shadow: 0 24px 70px rgba(0,0,0,.55);
       text-align: center;
       animation: popIn .3s cubic-bezier(.34,1.56,.64,1) both;
     }
+    :host([theme='light']) .modal-card { box-shadow: 0 24px 70px rgba(20,30,50,.18); }
     .modal-card h2 { margin: 0; font-size: 1.5rem; font-weight: 800; }
     .modal-card .emoji { font-size: 3rem; }
 
@@ -304,8 +358,8 @@ export class OctapusGame extends LitElement {
       min-width: 92px;
       padding: .7rem .9rem;
       border-radius: 14px;
-      background: linear-gradient(160deg, rgba(255,255,255,.12), rgba(255,255,255,.03));
-      border: 1px solid rgba(255,255,255,.14);
+      background: color-mix(in srgb, var(--og-text) 6%, transparent);
+      border: 1px solid color-mix(in srgb, var(--og-text) 14%, transparent);
       animation: popIn .35s cubic-bezier(.34,1.56,.64,1) both;
     }
     .stat-card.is-best {
@@ -319,10 +373,7 @@ export class OctapusGame extends LitElement {
       font-weight: 800;
       line-height: 1.1;
       font-variant-numeric: tabular-nums;
-      background: linear-gradient(135deg, var(--og-accent, #ff9900), var(--og-primary, #0066cc));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+      color: var(--og-accent, #ff9900);
     }
     .stat-label {
       font-size: .65rem;
@@ -348,10 +399,11 @@ export class OctapusGame extends LitElement {
       padding: .6rem 1.4rem;
       font-size: .9rem;
       font-weight: 600;
-      background: linear-gradient(135deg, var(--og-primary, #0066cc), var(--og-accent, #ff9900));
+      background: var(--og-primary, #0066cc);
       color: #fff;
-      transition: transform .15s;
+      transition: transform .15s, filter .15s;
     }
+    button.btn-primary:hover { filter: brightness(1.1); }
     button.btn-primary:active { transform: scale(.97); }
     button.btn-primary:focus-visible { outline: 3px solid var(--og-accent, #ff9900); outline-offset: 2px; }
 
@@ -381,6 +433,7 @@ export class OctapusGame extends LitElement {
   @property({ attribute: false }) state: GameState | null = null;
   @property({ type: Boolean }) muted = false;
   @property({ type: Number }) seed?: number;
+  @property({ type: String, reflect: true }) theme: 'dark' | 'light' = 'dark';
 
   // ─── Internal state ─────────────────────────────────────────────────────
   @state() private _phase: Phase = 'idle';
@@ -699,6 +752,11 @@ export class OctapusGame extends LitElement {
     this._startLevel();
   }
 
+  private _toggleTheme() {
+    this.theme = this.theme === 'dark' ? 'light' : 'dark';
+    this._dispatch('og-theme-change', { gameId: GAME_ID, theme: this.theme });
+  }
+
   // ─── Audio (Web Audio API) ──────────────────────────────────────────────
   private _audioCtx() {
     if (!this._ctx) this._ctx = new AudioContext();
@@ -741,12 +799,31 @@ export class OctapusGame extends LitElement {
   }
 
   // ─── Render ──────────────────────────────────────────────────────────────
+  private _renderThemeToggle() {
+    const isLight = this.theme === 'light';
+    return html`
+      <button
+        class="theme-toggle"
+        part="theme-toggle"
+        type="button"
+        @click=${this._toggleTheme}
+        aria-pressed=${isLight.toString()}
+        aria-label=${isLight ? 'Koyu temaya geç' : 'Açık temaya geç'}
+        title=${isLight ? 'Koyu tema' : 'Açık tema'}
+      >${isLight ? '☀️' : '🌙'}</button>
+    `;
+  }
+
   private _renderHUD() {
     const secs = Math.floor(this._elapsed / 1000);
     const m = String(Math.floor(secs / 60)).padStart(2, '0');
     const s = String(secs % 60).padStart(2, '0');
     return html`
       <div class="hud" part="hud">
+        <div class="hud-left">
+          ${this._renderThemeToggle()}
+          <slot name="host-controls"></slot>
+        </div>
         <div class="level-chip">
           ${this.mode === 'levels' ? html`Seviye ${this._currentLevel}/${this.levelCount}` : html`Serbest Mod`}
           · ${m}:${s}
@@ -871,6 +948,7 @@ export class OctapusGame extends LitElement {
         <h2>Octapus</h2>
         <p>Ahtapotu kaçış giderine ulaştır. Bir yola tıkla, ahtapot süzülsün.</p>
         <button class="btn-primary" part="button" @click=${this._startLevel} aria-label="Oyunu başlat">Başla</button>
+        ${this._renderThemeToggle()}
       </div>
     `;
   }
