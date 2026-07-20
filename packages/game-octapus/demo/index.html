@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Octapus – og-octapus Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 1.25rem;
+      background: radial-gradient(ellipse at 30% 20%, #0e3a52 0%, #071018 60%);
+      font-family: 'Inter', system-ui, sans-serif;
+      padding: 2rem 1.5rem 3rem;
+    }
+    @supports (justify-content: safe center) {
+      body { justify-content: safe center; }
+    }
+
+    header { text-align: center; }
+    header h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #ff9900;
+      opacity: .85;
+    }
+
+    og-octapus {
+      --og-font: 'Inter', system-ui, sans-serif;
+      --og-bg: #0b1220;
+      --og-surface: #f4f7fb;
+      --og-primary: #0066cc;
+      --og-accent: #ff9900;
+      --og-text: #eaf2ff;
+      --og-radius: 16px;
+
+      width: 100%;
+      max-width: 640px;
+      box-shadow: 0 0 60px rgba(0, 102, 204, 0.2), 0 0 0 1px rgba(255,153,0,.15);
+    }
+
+    #controls {
+      width: 100%;
+      max-width: 640px;
+      display: flex;
+      gap: .5rem;
+      justify-content: center;
+    }
+    #controls button {
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,.15);
+      background: rgba(255,255,255,.05);
+      color: #eaf2ff;
+      border-radius: 8px;
+      padding: .4rem .8rem;
+      font-size: .8rem;
+      font-weight: 600;
+      transition: background .15s, border-color .15s, color .15s;
+    }
+    #toggle-mode.is-levels {
+      border-color: rgba(0,102,204,.6);
+      background: rgba(0,102,204,.18);
+    }
+    #toggle-mode.is-random {
+      border-color: rgba(255,153,0,.6);
+      background: rgba(255,153,0,.18);
+    }
+    #toggle-mute.is-muted {
+      border-color: rgba(255,255,255,.15);
+      background: rgba(255,255,255,.05);
+      color: rgba(234,242,255,.55);
+    }
+    #toggle-mute.is-unmuted {
+      border-color: rgba(0,204,140,.6);
+      background: rgba(0,204,140,.16);
+      color: #eaf2ff;
+    }
+
+    #event-log {
+      width: 100%;
+      max-width: 640px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px;
+      padding: .75rem 1rem;
+      font-size: .75rem;
+      color: rgba(200,200,220,.6);
+      font-family: 'Courier New', monospace;
+      max-height: 110px;
+      overflow-y: auto;
+    }
+    #event-log p { margin: .1rem 0; }
+    #event-log .ts { color: #ff9900; }
+
+    #mode-hint {
+      width: 100%;
+      max-width: 640px;
+      margin: -0.5rem 0 0;
+      font-size: .9rem;
+      color: rgba(234, 242, 255, .65);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Octapull Games · Octapus</h1>
+  </header>
+
+  <og-octapus id="game" mode="levels" levelCount="8"></og-octapus>
+  <script>
+    // Runs before the module script below, so the attribute is correct
+    // by the time the custom element upgrades.
+    var savedMode = sessionStorage.getItem('octapus-mode');
+    if (savedMode) document.getElementById('game').setAttribute('mode', savedMode);
+  </script>
+
+  <p id="mode-hint">İpucu: Oyuna ısınmak için "Seviyeler" moduyla başlayıp kolaydan zora ilerleyebilirsiniz.</p>
+
+  <div id="controls">
+    <button id="toggle-mode">Modu Değiştir (levels/random)</button>
+    <button id="toggle-mute">Sesi Aç/Kapat</button>
+  </div>
+
+  <!-- <div id="event-log" aria-live="polite" aria-label="Oyun olay günlüğü"></div> -->
+
+  <script type="module">
+    import '../src/index.ts';
+
+    const game = document.getElementById('game');
+    // const log  = document.getElementById('event-log');
+
+    function addLog(name, detail) {
+      // const p = document.createElement('p');
+      // const t = new Date().toLocaleTimeString('tr-TR');
+      // p.innerHTML = `<span class="ts">${t}</span> <b>${name}</b> ${JSON.stringify(detail)}`;
+      // log.prepend(p);
+    }
+
+    // Restore state from sessionStorage between reloads (demo only)
+    const saved = sessionStorage.getItem('octapus-state');
+    if (saved) {
+      try { game.state = JSON.parse(saved); } catch (_) {}
+    }
+
+    ['og-ready', 'og-level-start', 'og-level-complete', 'og-level-fail', 'og-game-complete'].forEach((ev) => {
+      game.addEventListener(ev, (e) => addLog(e.type, e.detail));
+    });
+
+    // The hint only makes sense on the idle/start screen — hide it once play begins.
+    const modeHint = document.getElementById('mode-hint');
+    game.addEventListener('og-level-start', () => { modeHint.style.display = 'none'; }, { once: true });
+
+    game.addEventListener('og-state-change', (e) => {
+      sessionStorage.setItem('octapus-state', JSON.stringify(e.detail.state));
+      addLog('og-state-change', { level: e.detail.state.currentLevel });
+    });
+
+    const modeBtn = document.getElementById('toggle-mode');
+    const muteBtn = document.getElementById('toggle-mute');
+
+    function updateModeButton() {
+      const isLevels = game.mode === 'levels';
+      modeBtn.textContent = isLevels ? 'Mod Seç: Seviyeler' : 'Mod Seç: Rastgele';
+      modeBtn.classList.toggle('is-levels', isLevels);
+      modeBtn.classList.toggle('is-random', !isLevels);
+    }
+
+    function updateMuteButton() {
+      muteBtn.textContent = game.muted ? 'Sesi Aç 🔇' : 'Sesi Kapat 🔊';
+      muteBtn.classList.toggle('is-muted', game.muted);
+      muteBtn.classList.toggle('is-unmuted', !game.muted);
+    }
+
+    updateModeButton();
+    updateMuteButton();
+
+    modeBtn.addEventListener('click', () => {
+      sessionStorage.removeItem('octapus-state');
+      sessionStorage.setItem('octapus-mode', game.mode === 'levels' ? 'random' : 'levels');
+      location.reload();
+    });
+
+    muteBtn.addEventListener('click', () => {
+      game.muted = !game.muted;
+      updateMuteButton();
+      addLog('demo', { muted: game.muted });
+    });
+  </script>
+</body>
+</html>
