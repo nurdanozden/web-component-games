@@ -407,6 +407,7 @@ export class HafizaGame extends LitElement {
   private _ctx: AudioContext | null = null;
   private _audioCtx() {
     if (!this._ctx) this._ctx = new AudioContext();
+    if (this._ctx.state === 'suspended') this._ctx.resume().catch(() => {});
     return this._ctx;
   }
   private _playTone(success: boolean) {

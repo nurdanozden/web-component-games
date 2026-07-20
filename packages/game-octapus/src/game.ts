@@ -702,6 +702,7 @@ export class OctapusGame extends LitElement {
   // ─── Audio (Web Audio API) ──────────────────────────────────────────────
   private _audioCtx() {
     if (!this._ctx) this._ctx = new AudioContext();
+    if (this._ctx.state === 'suspended') this._ctx.resume().catch(() => {});
     return this._ctx;
   }
 
