@@ -150,11 +150,19 @@ export class OctapusGame extends LitElement {
     :host {
       display: block;
       font-family: var(--og-font, system-ui, -apple-system, sans-serif);
+      /* Dark theme tokens. The public --og-* variables stay overridable by the
+         host page (outer-tree rules beat :host); the private --_* ones cover
+         board details that aren't part of the public contract but still have
+         to flip with the theme. */
       --og-bg: #0b1220;
-      --og-surface: #f4f7fb;
+      --og-surface: #111d2f;
       --og-primary: #0066cc;
       --og-accent: #ff9900;
       --og-text: #eaf2ff;
+      --_wall: #4d9bff;
+      --_board-border: rgba(234, 242, 255, .10);
+      --_backdrop: rgba(4, 10, 20, .72);
+      --_modal-shadow: 0 24px 70px rgba(0, 0, 0, .55);
       box-sizing: border-box;
       width: 100%;
       background: var(--og-bg);
@@ -173,6 +181,10 @@ export class OctapusGame extends LitElement {
       --og-primary: #0057b3;
       --og-accent: #d97400;
       --og-text: #16202e;
+      --_wall: #0057b3;
+      --_board-border: rgba(22, 32, 46, .12);
+      --_backdrop: rgba(20, 30, 50, .45);
+      --_modal-shadow: 0 24px 70px rgba(20, 30, 50, .18);
     }
 
     .hud {
@@ -198,13 +210,13 @@ export class OctapusGame extends LitElement {
       cursor: pointer;
       border: none;
       border-radius: 999px;
-      width: 2rem;
-      height: 2rem;
       flex: none;
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      font-size: 1rem;
+      gap: .3rem;
+      padding: .3rem .55rem;
+      font-size: .75rem;
+      font-weight: 600;
       line-height: 1;
       background: color-mix(in srgb, var(--og-text) 10%, transparent);
       color: var(--og-text);
@@ -245,13 +257,12 @@ export class OctapusGame extends LitElement {
       width: 100%;
       max-width: min(640px, 100%);
       aspect-ratio: 1;
-      background: var(--og-surface, #f4f7fb);
+      background: var(--og-surface);
+      border: 1px solid var(--_board-border);
       border-radius: calc(var(--og-radius, 16px) * .6);
       touch-action: none;
       cursor: pointer;
-    }
-    :host([theme='light']) .maze {
-      border: 1px solid color-mix(in srgb, var(--og-text) 12%, transparent);
+      transition: background .2s ease, border-color .2s ease;
     }
     .maze:focus-visible { outline: 3px solid var(--og-accent, #ff9900); outline-offset: 2px; }
     .maze.shake { animation: shake .32s ease; }
@@ -262,11 +273,12 @@ export class OctapusGame extends LitElement {
       40%, 60% { transform: translateX(5px); }
     }
     line.wall {
-      stroke: var(--og-primary, #0066cc);
+      stroke: var(--_wall);
       stroke-width: 2.4;
       stroke-linecap: round;
     }
-    .exit-cell { fill: var(--og-accent, #ff9900); opacity: .18; }
+    .exit-cell { fill: var(--og-accent, #ff9900); opacity: .28; }
+    :host([theme='light']) .exit-cell { opacity: .18; }
     .player-g { transition: transform .13s ease; transform-origin: 0 0; }
     .player-g.sinking {
       transition: transform .7s cubic-bezier(.55,0,.85,.35) .3s, opacity .55s ease .4s;
@@ -312,6 +324,13 @@ export class OctapusGame extends LitElement {
     .overlay h2 { margin: 0; font-size: 1.5rem; font-weight: 800; }
     .overlay p { margin: 0; opacity: .7; font-size: .9rem; }
     .overlay .emoji { font-size: 3rem; }
+    .idle-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: .4rem;
+    }
 
     .modal-backdrop {
       position: fixed;
@@ -319,7 +338,7 @@ export class OctapusGame extends LitElement {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(4, 10, 20, .72);
+      background: var(--_backdrop);
       backdrop-filter: blur(3px);
       z-index: 999;
       padding: 1.5rem;
@@ -336,13 +355,12 @@ export class OctapusGame extends LitElement {
       overflow-y: auto;
       padding: 2rem 1.5rem;
       border-radius: calc(var(--og-radius, 16px) * 1.1);
-      background: var(--og-bg, #0b1220);
+      background: var(--og-bg);
       border: 1px solid color-mix(in srgb, var(--og-text) 14%, transparent);
-      box-shadow: 0 24px 70px rgba(0,0,0,.55);
+      box-shadow: var(--_modal-shadow);
       text-align: center;
       animation: popIn .3s cubic-bezier(.34,1.56,.64,1) both;
     }
-    :host([theme='light']) .modal-card { box-shadow: 0 24px 70px rgba(20,30,50,.18); }
     .modal-card h2 { margin: 0; font-size: 1.5rem; font-weight: 800; }
     .modal-card .emoji { font-size: 3rem; }
 
@@ -810,7 +828,7 @@ export class OctapusGame extends LitElement {
         aria-pressed=${isLight.toString()}
         aria-label=${isLight ? 'Koyu temaya geç' : 'Açık temaya geç'}
         title=${isLight ? 'Koyu tema' : 'Açık tema'}
-      >${isLight ? '☀️' : '🌙'}</button>
+      >${isLight ? '☀️ Tema: Açık' : '🌙 Tema: Koyu'}</button>
     `;
   }
 
@@ -948,7 +966,10 @@ export class OctapusGame extends LitElement {
         <h2>Octapus</h2>
         <p>Ahtapotu kaçış giderine ulaştır. Bir yola tıkla, ahtapot süzülsün.</p>
         <button class="btn-primary" part="button" @click=${this._startLevel} aria-label="Oyunu başlat">Başla</button>
-        ${this._renderThemeToggle()}
+        <div class="idle-controls">
+          ${this._renderThemeToggle()}
+          <slot name="host-controls"></slot>
+        </div>
       </div>
     `;
   }

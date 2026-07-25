@@ -233,7 +233,7 @@ export class OctafortGame extends LitElement {
       --_surface: #0f172a;   /* grid, inset a step deeper than the card */
       --_text: #f8fafc;
       --_text-dim: #94a3b8;
-      --_wall: #64748b;      /* sector ramparts — soft slate, not neon */
+      --_wall: #06d3f7;      /* sector ramparts — turquoise */
       --_border: #334155;
       --_shadow: 0 20px 25px -5px rgba(0,0,0,.4), 0 8px 10px -6px rgba(0,0,0,.3);
       --_line: rgba(255,255,255,.10);
@@ -268,8 +268,8 @@ export class OctafortGame extends LitElement {
       --_bg: #ffffff;        /* card */
       --_surface: #f1f5f9;   /* grid */
       --_text: #0f172a;
-      --_text-dim: #64748b;
-      --_wall: #94a3b8;
+      --_text-dim: #8daec1;
+      --_wall: #03d3f8;
       --_border: #e2e8f0;
       --_shadow: 0 20px 25px -5px rgba(15,23,42,.08), 0 8px 10px -6px rgba(15,23,42,.04);
       --_line: rgba(15,23,42,.10);

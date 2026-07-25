@@ -15,14 +15,16 @@
     /* Flat page surfaces only — no gradients anywhere. The game card sits one
        step lighter/darker than the page so it reads as elevated. */
     :root {
-      --page-bg: #f8fafc;
+      --page-bg: #d7dde1b5;
       --page-fg: #64748b;
-      --panel-line: #e2e8f0;
+      --panel-line: #94a3b8;
+      --panel-fill: rgba(100, 116, 139, .1);
     }
     body.theme-dark {
       --page-bg: #0f172a;
       --page-fg: #94a3b8;
       --panel-line: #334155;
+      --panel-fill: rgba(148, 163, 184, .08);
     }
 
     body {
@@ -79,13 +81,13 @@
     .controls button {
       cursor: pointer;
       border: 1px solid var(--panel-line);
-      background: transparent;
+      background: var(--panel-fill);
       color: inherit;
       border-radius: 8px;
       padding: .4rem .8rem;
       font-size: .8rem;
       font-weight: 600;
-      transition: opacity .15s;
+      transition: background .15s, border-color .15s, opacity .15s;
     }
     .controls button:hover { opacity: .7; }
 
@@ -121,8 +123,8 @@
   </script>
 
   <p id="mode-hint">
-    İpucu: Bir kule, kendi satırındaki/sütunundaki/bölgesindeki ve etrafındaki tüm
-    kareleri eler. Kesinlikle kule olamayacak kareleri ✕ (sur) ile işaretleyerek
+    İpucu: Bir kule, kendi satırındaki,sütunundaki ve etrafındaki tüm
+    kareleri eler. Kule koyabileceğin kareleri ✕ (sur) ile işaretleyerek
     ilerle. Dokun: <b>✕ → 🏰 → boş</b>.
   </p>
 
