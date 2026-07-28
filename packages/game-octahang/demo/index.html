@@ -115,6 +115,15 @@
       document.getElementById('game').setAttribute('theme', savedTheme);
       document.body.classList.toggle('theme-dark', savedTheme === 'dark');
     }
+
+    // Dil, boyamadan önce uygulanır: aksi hâlde sayfa bir kare LTR açılıp
+    // Arapçaya geçtiğinde göz kırpması (FOUC) olur. Anahtar core/i18n.ts ile
+    // aynıdır (og-lang); modül yüklendiğinde changeLanguage aynı değeri okur.
+    var savedLang = localStorage.getItem('og-lang');
+    if (savedLang) {
+      document.documentElement.setAttribute('lang', savedLang);
+      document.documentElement.setAttribute('dir', savedLang === 'ar' ? 'rtl' : 'ltr');
+    }
   </script>
 
   <p id="mode-hint">
@@ -164,15 +173,43 @@
     const modeBtn = document.getElementById('toggle-mode');
     const muteBtn = document.getElementById('toggle-mute');
 
-    function updateModeButton() {
-      modeBtn.textContent = game.mode === 'levels' ? 'Mod: Seviyeler' : 'Mod: Rastgele';
-    }
-    function updateMuteButton() {
-      muteBtn.textContent = game.muted ? 'Ses: Kapalı 🔇' : 'Ses: Açık 🔊';
+    // Sayfanın kendi metinleri. Oyunun içindekiler bileşenin sözlüğünden gelir;
+    // burada yalnızca demo kabuğuna ait olanlar çevrilir. Dil seçici oyunun
+    // HUD'ında durduğu için sayfaya ayrı bir seçici eklenmez.
+    const PAGE_TEXT = {
+      tr: { hint: 'İpucu: Harfleri ekrandaki klavyeden seçebilir ya da doğrudan bilgisayarının klavyesinden yazabilirsin.',
+            levels: 'Mod: Seviyeler', random: 'Mod: Rastgele', on: 'Ses: Açık 🔊', off: 'Ses: Kapalı 🔇' },
+      en: { hint: 'Tip: pick letters from the on-screen keyboard, or just type them on your own keyboard.',
+            levels: 'Mode: Levels', random: 'Mode: Random', on: 'Sound: On 🔊', off: 'Sound: Off 🔇' },
+      it: { hint: 'Suggerimento: scegli le lettere dalla tastiera a schermo, oppure digitale sulla tua tastiera.',
+            levels: 'Modalità: Livelli', random: 'Modalità: Casuale', on: 'Audio: Acceso 🔊', off: 'Audio: Spento 🔇' },
+      es: { hint: 'Consejo: elige las letras en el teclado de pantalla o escríbelas en tu propio teclado.',
+            levels: 'Modo: Niveles', random: 'Modo: Aleatorio', on: 'Sonido: Activado 🔊', off: 'Sonido: Apagado 🔇' },
+      ar: { hint: 'نصيحة: اختر الحروف من لوحة المفاتيح على الشاشة، أو اكتبها مباشرة من لوحة مفاتيحك.',
+            levels: 'الوضع: المستويات', random: 'الوضع: عشوائي', on: 'الصوت: مفعّل 🔊', off: 'الصوت: مكتوم 🔇' },
+    };
+
+    function pageText() {
+      return PAGE_TEXT[window.ogI18n.getLanguage()] ?? PAGE_TEXT.tr;
     }
 
-    updateModeButton();
-    updateMuteButton();
+    function updateModeButton() {
+      modeBtn.textContent = game.mode === 'levels' ? pageText().levels : pageText().random;
+    }
+    function updateMuteButton() {
+      muteBtn.textContent = game.muted ? pageText().off : pageText().on;
+    }
+
+    function updatePageLanguage() {
+      modeHint.textContent = pageText().hint;
+      updateModeButton();
+      updateMuteButton();
+    }
+
+    // Dil seçici oyunun içindedir; sayfa aynı yayını dinleyerek kendi
+    // metinlerini de aynı anda çevirir.
+    window.addEventListener('og-language-change', updatePageLanguage);
+    updatePageLanguage();
 
     modeBtn.addEventListener('click', () => {
       sessionStorage.removeItem('octahang-state');

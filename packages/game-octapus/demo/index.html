@@ -151,6 +151,15 @@
       document.getElementById('game').setAttribute('theme', savedTheme);
       document.body.classList.toggle('theme-dark', savedTheme === 'dark');
     }
+
+    // Dil, boyamadan önce uygulanır: aksi hâlde sayfa bir kare LTR açılıp
+    // Arapçaya geçtiğinde göz kırpması (FOUC) olur. Anahtar core/i18n.ts ile
+    // aynıdır (og-lang); modül yüklendiğinde changeLanguage aynı değeri okur.
+    var savedLang = localStorage.getItem('og-lang');
+    if (savedLang) {
+      document.documentElement.setAttribute('lang', savedLang);
+      document.documentElement.setAttribute('dir', savedLang === 'ar' ? 'rtl' : 'ltr');
+    }
   </script>
 
   <p id="mode-hint">İpucu: Oyuna ısınmak için "Seviyeler" moduyla başlayıp kolaydan zora ilerleyebilirsiniz.</p>
@@ -214,21 +223,49 @@
     const modeBtn = document.getElementById('toggle-mode');
     const muteBtn = document.getElementById('toggle-mute');
 
+    // Sayfanın kendi metinleri. Oyunun içindeki metinler bileşenin sözlüğünden
+    // gelir; burada yalnızca demo kabuğuna ait olanlar çevrilir. Dil seçici
+    // oyunun HUD'ında durduğu için sayfaya ayrı bir seçici eklenmez.
+    const PAGE_TEXT = {
+      tr: { hint: 'İpucu: Oyuna ısınmak için "Seviyeler" moduyla başlayıp kolaydan zora ilerleyebilirsiniz.',
+            levels: '🧩 Mod: Seviyeler', random: '🎲 Mod: Rastgele', on: '🔊 Ses: Açık', off: '🔇 Ses: Kapalı' },
+      en: { hint: 'Tip: start in "Levels" mode to warm up, then work your way from easy to hard.',
+            levels: '🧩 Mode: Levels', random: '🎲 Mode: Random', on: '🔊 Sound: On', off: '🔇 Sound: Off' },
+      it: { hint: 'Suggerimento: inizia in modalità "Livelli" per scaldarti, poi sali dal facile al difficile.',
+            levels: '🧩 Modalità: Livelli', random: '🎲 Modalità: Casuale', on: '🔊 Audio: Acceso', off: '🔇 Audio: Spento' },
+      es: { hint: 'Consejo: empieza en modo "Niveles" para calentar y avanza de lo fácil a lo difícil.',
+            levels: '🧩 Modo: Niveles', random: '🎲 Modo: Aleatorio', on: '🔊 Sonido: Activado', off: '🔇 Sonido: Apagado' },
+      ar: { hint: 'نصيحة: ابدأ بوضع «المستويات» للإحماء ثم تدرّج من السهل إلى الصعب.',
+            levels: '🧩 الوضع: المستويات', random: '🎲 الوضع: عشوائي', on: '🔊 الصوت: مفعّل', off: '🔇 الصوت: مكتوم' },
+    };
+
+    function pageText() {
+      return PAGE_TEXT[window.ogI18n.getLanguage()] ?? PAGE_TEXT.tr;
+    }
+
     function updateModeButton() {
       const isLevels = game.mode === 'levels';
-      modeBtn.textContent = isLevels ? '🧩 Mod: Seviyeler' : '🎲 Mod: Rastgele';
+      modeBtn.textContent = isLevels ? pageText().levels : pageText().random;
       modeBtn.classList.toggle('is-levels', isLevels);
       modeBtn.classList.toggle('is-random', !isLevels);
     }
 
     function updateMuteButton() {
-      muteBtn.textContent = game.muted ? '🔇 Ses: Kapalı' : '🔊 Ses: Açık';
+      muteBtn.textContent = game.muted ? pageText().off : pageText().on;
       muteBtn.classList.toggle('is-muted', game.muted);
       muteBtn.classList.toggle('is-unmuted', !game.muted);
     }
 
-    updateModeButton();
-    updateMuteButton();
+    function updatePageLanguage() {
+      modeHint.textContent = pageText().hint;
+      updateModeButton();
+      updateMuteButton();
+    }
+
+    // Dil seçici oyunun içindedir; sayfa aynı yayını dinleyerek kendi
+    // metinlerini de aynı anda çevirir.
+    window.addEventListener('og-language-change', updatePageLanguage);
+    updatePageLanguage();
 
     modeBtn.addEventListener('click', () => {
       sessionStorage.removeItem('octapus-state');

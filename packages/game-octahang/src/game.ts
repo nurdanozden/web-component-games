@@ -1,8 +1,15 @@
 import { LitElement, html, svg, css, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import { GameState, LevelResult } from '@octapull-games/core';
-import { ALPHABET, WORDS } from './words';
-import type { Tier, WordEntry } from './words';
+import {
+  GameState,
+  LevelResult,
+  Localized,
+  i18nStyles,
+  renderLanguagePicker,
+  type MessageKey,
+} from '@octapull-games/core';
+import { getWordPool } from './words';
+import type { Tier, WordEntry, WordPool } from './words';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -21,8 +28,13 @@ const LOSS_REVEAL_MS = 780; // son uzuv çizilirken
 
 type Phase = 'idle' | 'playing' | 'finishing' | 'won' | 'lost';
 
-/** İpucu kutusundaki zorluk rozetinin metni. */
-const TIER_LABELS: Record<Tier, string> = { 1: 'Kolay', 2: 'Orta', 3: 'Zor', 4: 'Çok Zor' };
+/** İpucu kutusundaki zorluk rozetinin çeviri anahtarları. */
+const TIER_KEYS: Record<Tier, MessageKey> = {
+  1: 'octahang.tier1',
+  2: 'octahang.tier2',
+  3: 'octahang.tier3',
+  4: 'octahang.tier4',
+};
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -42,8 +54,20 @@ function mulberry32(seed: number) {
  * ('ı' → 'I' dönüşümünü motor zaten doğru yapar, ama açıkça yazmak niyeti
  * belli eder ve locale ayarından bağımsız kılar.)
  */
-export function trUpper(input: string): string {
-  return input.replace(/i/g, 'İ').replace(/ı/g, 'I').toUpperCase();
+export const trUpper: (input: string) => string = getWordPool('tr').normalize;
+
+/**
+ * Tekrar önleme belleğini havuzun boyuna uydurur. Sabit 60'ta kalsaydı, katman
+ * başına 12 kelimelik daha küçük dil havuzlarında bir katman tümüyle
+ * "kullanılmış" duruma düşer ve seçim sürekli yedek dallara saparak zorluk
+ * eğrisini bozardı. Sınır, en küçük katmanın bir altında tutulur.
+ */
+function usedMemoryFor(pool: WordPool): number {
+  const perTier = ([1, 2, 3, 4] as Tier[])
+    .map((t) => pool.words.filter((e) => e.tier === t).length)
+    .filter((n) => n > 0);
+  const smallest = perTier.length ? Math.min(...perTier) : 0;
+  return Math.max(1, Math.min(USED_WORD_MEMORY, smallest - 1));
 }
 
 /**
@@ -62,7 +86,12 @@ function tierForLevel(level: number, levelCount: number): Tier {
  * bakılır; en son çare olarak "kullanılmış" filtresi kaldırılır. Böylece havuz
  * tükendiğinde bile oyun daima bir kelime bulur.
  */
-function pickWord(rand: () => number, tier: Tier, used: ReadonlySet<string>): WordEntry {
+function pickWord(
+  rand: () => number,
+  tier: Tier,
+  used: ReadonlySet<string>,
+  words: readonly WordEntry[],
+): WordEntry {
   // İstenen katman başta; kalanlar ona olan uzaklığa göre, eşitlikte zor olan
   // önce gelecek biçimde sıralanır.
   const order = ([1, 2, 3, 4] as Tier[]).sort((a, b) => {
@@ -71,27 +100,32 @@ function pickWord(rand: () => number, tier: Tier, used: ReadonlySet<string>): Wo
   });
 
   for (const t of order) {
-    const fresh = WORDS.filter((e) => e.tier === t && !used.has(e.word));
+    const fresh = words.filter((e) => e.tier === t && !used.has(e.word));
     if (fresh.length) return fresh[(rand() * fresh.length) | 0];
   }
   for (const t of order) {
-    const any = WORDS.filter((e) => e.tier === t);
+    const any = words.filter((e) => e.tier === t);
     if (any.length) return any[(rand() * any.length) | 0];
   }
-  return WORDS[(rand() * WORDS.length) | 0];
+  return words[(rand() * words.length) | 0];
 }
 
 /**
- * Klavye satırları: 29 harflik alfabe alfabetik sırayı bozmadan 10-10-9 diye
- * bölünür. Harfleri aramak sıraya bağlı olduğu için bölüm noktaları sabittir;
- * satır uzunlukları da birbirine yakın olduğundan klavye dengeli bir blok
- * hâlinde durur.
+ * Klavye satırları: alfabe, alfabetik sırayı bozmadan üç dengeli satıra
+ * bölünür (Türkçede 29 harf → 10-10-9, İngilizcede 26 → 9-9-8, İtalyancada
+ * 21 → 7-7-7). Harfleri aramak sıraya bağlı olduğu için bölme noktaları
+ * daima baştan sona ilerler; satır uzunlukları birbirine yakın kaldığından
+ * klavye her dilde dengeli bir blok hâlinde durur.
  */
-const KEYBOARD_ROWS: readonly (readonly string[])[] = [
-  ALPHABET.slice(0, 10),
-  ALPHABET.slice(10, 20),
-  ALPHABET.slice(20),
-].map((row) => row.split(''));
+function keyboardRows(alphabet: string): string[][] {
+  const letters = [...alphabet];
+  const perRow = Math.ceil(letters.length / 3);
+  return [
+    letters.slice(0, perRow),
+    letters.slice(perRow, perRow * 2),
+    letters.slice(perRow * 2),
+  ].filter((row) => row.length > 0);
+}
 
 /** Kelimedeki benzersiz harfler (ilerleme çubuğu ve kazanma kontrolü için). */
 function uniqueLetters(word: string): string[] {
@@ -100,8 +134,8 @@ function uniqueLetters(word: string): string[] {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export class OctahangGame extends LitElement {
-  static styles = css`
+export class OctahangGame extends Localized(LitElement) {
+  static styles = [i18nStyles, css`
     *, *::before, *::after { box-sizing: border-box; }
 
     :host {
@@ -358,7 +392,9 @@ export class OctahangGame extends LitElement {
       gap: var(--_kb-gap);
     }
     .key {
-      flex: 0 1 calc((100% - 9 * var(--_kb-gap)) / 10);
+      /* Tuş genişliği en uzun satıra göre hesaplanır; sütun sayısı dile göre
+         değiştiği için (TR 10, EN 9, IT 7 …) satır çizilirken inline verilir. */
+      flex: 0 1 calc((100% - (var(--_kb-cols, 10) - 1) * var(--_kb-gap)) / var(--_kb-cols, 10));
       min-width: 1.35rem;
       max-width: 3rem;
       cursor: pointer;
@@ -563,7 +599,7 @@ export class OctahangGame extends LitElement {
       .progress-fill { transition: none; }
       .key { transition: none; }
     }
-  `;
+  `];
 
   // ─── Public API (sözleşme) ───────────────────────────────────────────────
   @property({ type: String }) mode: 'levels' | 'random' = 'levels';
@@ -577,7 +613,7 @@ export class OctahangGame extends LitElement {
 
   // ─── Internal state ──────────────────────────────────────────────────────
   @state() private _phase: Phase = 'idle';
-  @state() private _entry: WordEntry = WORDS[0];
+  @state() private _entry: WordEntry = getWordPool('tr').words[0];
   @state() private _guessed: string[] = [];
   @state() private _wrong = 0;
   @state() private _currentLevel = 1;
@@ -604,6 +640,11 @@ export class OctahangGame extends LitElement {
 
   private get _word(): string {
     return this._entry.word;
+  }
+
+  /** Seçili dilin alfabesi, kelime havuzu ve girdi normalizasyonu. */
+  private get _pool(): WordPool {
+    return getWordPool(this.locale);
   }
 
   private get _levelKey(): number {
@@ -636,8 +677,9 @@ export class OctahangGame extends LitElement {
     const target = e.composedPath()[0] as HTMLElement | undefined;
     if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
 
-    const letter = trUpper(e.key);
-    if (letter.length !== 1 || !ALPHABET.includes(letter)) return;
+    const pool = this._pool;
+    const letter = pool.normalize(e.key);
+    if (letter.length !== 1 || !pool.alphabet.includes(letter)) return;
     if (this._guessed.includes(letter)) return;
 
     e.preventDefault();
@@ -670,6 +712,18 @@ export class OctahangGame extends LitElement {
     window.removeEventListener('keydown', this._onWindowKey);
   }
 
+  willUpdate(changed: Map<PropertyKey, unknown>) {
+    super.willUpdate(changed);
+    // Tur ortasında dil değişirse kelime eski havuzdan, klavye yeni alfabeden
+    // gelir — Türkçe bir kelimeyi Arapça klavyeyle bulmak imkânsız olurdu.
+    // Bu yüzden tur, yeni dilin havuzundan seçilen bir kelimeyle baştan başlar.
+    // (changed.get eski değeri verir; ilk render'da undefined olur ve atlanır.)
+    // render öncesinde çalışır, böylece kelime ve klavye aynı karede tazelenir.
+    if (changed.has('locale') && changed.get('locale') !== undefined && this._phase === 'playing') {
+      this._startLevel();
+    }
+  }
+
   updated() {
     // Tur bitince basılan harf düğmesi DOM'dan kalkar; klavyeyle oynayanın
     // odağı boşlukta kalmasın diye sonuç panelinin düğmesine taşınır.
@@ -696,14 +750,17 @@ export class OctahangGame extends LitElement {
       ? tierForLevel(this._currentLevel, this.levelCount)
       : rng() < 0.5 ? 2 : 3;
 
-    this._entry = pickWord(rng, tier, new Set(this._usedWords));
+    this._entry = pickWord(rng, tier, new Set(this._usedWords), this._pool.words);
     // Her tur bomboş tahtayla başlar; hiçbir harf baştan açık gelmez.
     this._guessed = [];
     this._wrong = 0;
     this._elapsed = 0;
     this._finalMs = 0;
     this._shaking = false;
-    this._announce = `Yeni kelime: ${this._word.length} harf. İpucu: ${this._entry.hint}`;
+    this._announce = this.t('octahang.announceNewWord', {
+      len: this._word.length,
+      hint: this._entry.hint,
+    });
     this._phase = 'playing';
     this._startTime = performance.now();
     this._tick();
@@ -733,7 +790,7 @@ export class OctahangGame extends LitElement {
     if (this._word.includes(letter)) {
       this._playTone('hit');
       const remaining = uniqueLetters(this._word).filter((c) => !this._guessed.includes(c));
-      this._announce = `${letter} doğru. Kalan harf: ${remaining.length}.`;
+      this._announce = this.t('octahang.announceCorrect', { letter, n: remaining.length });
       if (remaining.length === 0) this._finish(true);
       return;
     }
@@ -741,7 +798,7 @@ export class OctahangGame extends LitElement {
     this._wrong++;
     this._wallFeedback();
     this._playTone('miss');
-    this._announce = `${letter} yanlış. Kalan hak: ${this._lives}.`;
+    this._announce = this.t('octahang.announceWrong', { letter, n: this._lives });
     if (this._wrong >= MAX_MISTAKES) this._finish(false);
   }
 
@@ -758,7 +815,9 @@ export class OctahangGame extends LitElement {
     clearTimeout(this._finishTimer);
     this._finalMs = Math.round(this._elapsed);
     this._phase = 'finishing';
-    this._announce = won ? 'Kelime bulundu!' : `Haklar bitti. Doğru kelime: ${this._word}.`;
+    this._announce = won
+      ? this.t('octahang.announceFound')
+      : this.t('octahang.announceOutOfLives', { word: this._word });
     this._playTone(won ? 'win' : 'lose');
 
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -837,7 +896,8 @@ export class OctahangGame extends LitElement {
 
   /** Aynı kelimenin yakın turlarda tekrar gelmemesi için son N kelime tutulur. */
   private _rememberWord(word: string) {
-    this._usedWords = [...this._usedWords.filter((w) => w !== word), word].slice(-USED_WORD_MEMORY);
+    const limit = usedMemoryFor(this._pool);
+    this._usedWords = [...this._usedWords.filter((w) => w !== word), word].slice(-limit);
   }
 
   private _persistState(nextLevel: number) {
@@ -932,9 +992,9 @@ export class OctahangGame extends LitElement {
         type="button"
         @click=${this._toggleTheme}
         aria-pressed=${isLight.toString()}
-        aria-label=${isLight ? 'Koyu temaya geç' : 'Açık temaya geç'}
-        title=${isLight ? 'Koyu tema' : 'Açık tema'}
-      >${isLight ? '☀️ Tema: Açık' : '🌙 Tema: Koyu'}</button>
+        aria-label=${this.t(isLight ? 'common.switchToDark' : 'common.switchToLight')}
+        title=${this.t(isLight ? 'common.themeDarkTitle' : 'common.themeLightTitle')}
+      >${isLight ? '☀️' : '🌙'} ${this.t(isLight ? 'common.themeLight' : 'common.themeDark')}</button>
     `;
   }
 
@@ -942,18 +1002,22 @@ export class OctahangGame extends LitElement {
     const secs = Math.floor(this._elapsed / 1000);
     const m = String(Math.floor(secs / 60)).padStart(2, '0');
     const s = String(secs % 60).padStart(2, '0');
+    const levelText = this.mode === 'levels'
+      ? this.t('common.level', { level: this._currentLevel, total: this.levelCount })
+      : this.t('common.freeMode');
     return html`
       <div class="hud" part="hud">
         <div class="hud-group">
+          ${renderLanguagePicker(this.locale)}
           ${this._renderThemeToggle()}
           <slot name="host-controls"></slot>
         </div>
         <div class="hud-group">
-          <span class="chip">
-            ${this.mode === 'levels' ? html`Seviye ${this._currentLevel}/${this.levelCount}` : html`Serbest Mod`}
-            · ${m}:${s}
-          </span>
-          <span class="chip lives ${this._lives <= 2 ? 'low' : ''}" aria-label="Kalan hak ${this._lives}">
+          <span class="chip">${levelText} · ${m}:${s}</span>
+          <span
+            class="chip lives ${this._lives <= 2 ? 'low' : ''}"
+            aria-label=${this.t('octahang.livesAria', { n: this._lives })}
+          >
             ❤️ ${this._lives}/${MAX_MISTAKES}
           </span>
         </div>
@@ -972,7 +1036,7 @@ export class OctahangGame extends LitElement {
         aria-valuenow=${pct}
         aria-valuemin="0"
         aria-valuemax="100"
-        aria-label="Bulunan harfler"
+        aria-label=${this.t('octahang.progress')}
       >
         <div class="progress-fill" style="width:${pct}%"></div>
       </div>
@@ -981,12 +1045,17 @@ export class OctahangGame extends LitElement {
 
   private _renderHint() {
     const tier = this._entry.tier;
-    const tierLabel = TIER_LABELS[tier];
+    const tierLabel = this.t(TIER_KEYS[tier]);
     return html`
       <div class="hint" part="hint">
         <span class="icon" aria-hidden="true">💡</span>
-        <span class="text"><span class="label">İpucu:</span>${this._entry.hint}</span>
-        <span class="tier-badge t${tier}" aria-label="Zorluk: ${tierLabel}">${tierLabel}</span>
+        <span class="text">
+          <span class="label">${this.t('octahang.hintLabel')}</span>${this._entry.hint}
+        </span>
+        <span
+          class="tier-badge t${tier}"
+          aria-label=${this.t('octahang.difficultyAria', { tier: tierLabel })}
+        >${tierLabel}</span>
       </div>
     `;
   }
@@ -1009,11 +1078,11 @@ export class OctahangGame extends LitElement {
     ];
 
     const label = this._wrong === 0
-      ? 'Darağacı boş, henüz hata yok.'
-      : `${this._wrong} hata: adamın ${this._wrong} parçası çizildi. Kalan hak ${this._lives}.`;
+      ? this.t('octahang.stageEmpty')
+      : this.t('octahang.stageDrawn', { wrong: this._wrong, lives: this._lives });
 
     return html`
-      <div class="stage ${this._shaking ? 'shake' : ''}" part="stage">
+      <div class="stage ltr-lock ${this._shaking ? 'shake' : ''}" part="stage">
         <svg viewBox="0 0 200 210" role="img" aria-label=${label}>
           <g class="gallows">
             <path d="M18,200 H118" />
@@ -1045,29 +1114,43 @@ export class OctahangGame extends LitElement {
   }
 
   private _wordAriaLabel(revealAll: boolean): string {
+    const blank = this.t('octahang.blank');
     const spoken = this._word
       .split('')
-      .map((ch) => (this._guessed.includes(ch) || revealAll ? ch : 'boş'))
+      .map((ch) => (this._guessed.includes(ch) || revealAll ? ch : blank))
       .join(', ');
-    return `${this._word.length} harfli kelime: ${spoken}`;
+    return this.t('octahang.wordAria', { n: this._word.length, spoken });
   }
 
   private _renderKeyboard() {
+    const rows = keyboardRows(this._pool.alphabet);
+    // Tuş genişliği en uzun satıra göre hesaplanır;
+    // kısa son satır aynı boyda kalıp yalnızca ortalanır.
+    const cols = Math.max(...rows.map((r) => r.length));
     return html`
-      <div class="keyboard" part="keyboard" role="group" aria-label="Harf klavyesi">
-        ${KEYBOARD_ROWS.map((row) => html`
+      <div
+        class="keyboard"
+        part="keyboard"
+        role="group"
+        aria-label=${this.t('octahang.keyboardAria')}
+        style="--_kb-cols:${cols}"
+      >
+        ${rows.map((row) => html`
           <div class="kb-row">
             ${row.map((ch) => {
               const used = this._guessed.includes(ch);
               const hit = used && this._word.includes(ch);
               const disabled = used || this._phase !== 'playing';
+              const suffix = used
+                ? this.t(hit ? 'octahang.keyAriaCorrect' : 'octahang.keyAriaWrong')
+                : '';
               return html`
                 <button
                   class="key ${hit ? 'hit' : used ? 'miss' : ''}"
                   part="key"
                   type="button"
                   ?disabled=${disabled}
-                  aria-label=${`${ch} harfini tahmin et${used ? hit ? ', doğru' : ', yanlış' : ''}`}
+                  aria-label=${this.t('octahang.keyAria', { letter: ch }) + suffix}
                   @click=${() => this._onKeyClick(ch)}
                 >${ch}</button>
               `;
@@ -1085,37 +1168,47 @@ export class OctahangGame extends LitElement {
     const m = String(Math.floor(secs / 60)).padStart(2, '0');
     const s = String(secs % 60).padStart(2, '0');
     const label = !won
-      ? 'Yeniden Başla'
-      : isGameComplete ? 'Tekrar Oyna' : this.mode === 'random' ? 'Yeni Kelime →' : 'Sonraki Seviye →';
+      ? this.t('octahang.restart')
+      : isGameComplete
+        ? this.t('common.playAgain')
+        : this.mode === 'random'
+          ? `${this.t('octahang.nextWord')} ${this.arrow}`
+          : `${this.t('octahang.nextLevel')} ${this.arrow}`;
 
     return html`
       <div class="modal-backdrop">
-        <div class="result" part="result" role="dialog" aria-modal="true" aria-label="Tur sonucu">
+        <div
+          class="result"
+          part="result"
+          role="dialog"
+          aria-modal="true"
+          aria-label=${this.t('octahang.resultAria')}
+        >
           <div class="emoji">${isGameComplete ? '🏆' : won ? '🎉' : '💀'}</div>
-          <h2>${isGameComplete ? 'Tüm seviyeler bitti!' : won ? 'Tebrikler!' : 'Kaybettin!'}</h2>
-          <p class="answer">Kelime: <b>${this._word}</b></p>
+          <h2>${this.t(isGameComplete ? 'octahang.allDone' : won ? 'octahang.won' : 'octahang.lost')}</h2>
+          <p class="answer">${this.t('octahang.answer')} <b>${this._word}</b></p>
           ${won
             ? html`
                 <div class="stats-row">
                   <div class="stat-card ${this._lastIsBest ? 'is-best' : ''}">
                     <span class="stat-icon">⭐</span>
                     <span class="stat-value">${this._lastScore}</span>
-                    <span class="stat-label">Puan</span>
+                    <span class="stat-label">${this.t('octahang.score')}</span>
                   </div>
                   <div class="stat-card">
                     <span class="stat-icon">⏱️</span>
                     <span class="stat-value">${m}:${s}</span>
-                    <span class="stat-label">Süre</span>
+                    <span class="stat-label">${this.t('common.time')}</span>
                   </div>
                   <div class="stat-card">
                     <span class="stat-icon">❤️</span>
                     <span class="stat-value">${this._lives}</span>
-                    <span class="stat-label">Kalan Hak</span>
+                    <span class="stat-label">${this.t('octahang.livesLeft')}</span>
                   </div>
                 </div>
               `
             : nothing}
-          ${this._lastIsBest ? html`<div class="best-badge">🌟 Yeni Rekor!</div>` : nothing}
+          ${this._lastIsBest ? html`<div class="best-badge">🌟 ${this.t('common.newRecord')}</div>` : nothing}
           <button class="btn-primary" part="button" @click=${this._next} aria-label=${label}>${label}</button>
         </div>
       </div>
@@ -1130,7 +1223,12 @@ export class OctahangGame extends LitElement {
    */
   private _renderIdleFigure() {
     return html`
-      <svg class="idle-figure" viewBox="0 0 110 132" role="img" aria-label="Darağacında asılı çöp adam figürü">
+      <svg
+        class="idle-figure"
+        viewBox="0 0 110 132"
+        role="img"
+        aria-label=${this.t('octahang.idleFigureAria')}
+      >
         <g class="gallows">
           <path d="M10,122 H62" />
           <path d="M26,122 V10" />
@@ -1153,18 +1251,22 @@ export class OctahangGame extends LitElement {
 
   private _renderIdle() {
     return html`
-      <div class="overlay-top">${this._renderThemeToggle()}<slot name="host-controls"></slot></div>
+      <div class="overlay-top">
+        ${renderLanguagePicker(this.locale)}
+        ${this._renderThemeToggle()}
+        <slot name="host-controls"></slot>
+      </div>
       <div class="overlay">
         ${this._renderIdleFigure()}
-        <h2>Octahang</h2>
-        <p>
-          İpucundan yola çıkıp gizli kelimeyi harf harf bul. Her yanlış harf
-          adamın bir parçasını çizer; altı hatada tur biter.
-        </p>
-        <p style="opacity:.6;font-size:.8rem">
-          Seviyeler modunda kolaydon zora doğru alıştırma yapabilirsiniz.
-        </p>
-        <button class="btn-primary" part="button" @click=${this._startLevel} aria-label="Oyunu başlat">Başla</button>
+        <h2>${this.t('octahang.title')}</h2>
+        <p>${this.t('octahang.tagline')}</p>
+        <p style="opacity:.6;font-size:.8rem">${this.t('octahang.taglineSub')}</p>
+        <button
+          class="btn-primary"
+          part="button"
+          @click=${this._startLevel}
+          aria-label=${this.t('common.startAria')}
+        >${this.t('common.start')}</button>
       </div>
     `;
   }

@@ -1,6 +1,12 @@
 import { LitElement, html, svg, css, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import { GameState, LevelResult } from '@octapull-games/core';
+import {
+  GameState,
+  LevelResult,
+  Localized,
+  i18nStyles,
+  renderLanguagePicker,
+} from '@octapull-games/core';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -143,8 +149,8 @@ function buildMaze(size: number, rng?: () => number, deadEndBias = 0): MazeData 
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export class OctapusGame extends LitElement {
-  static styles = css`
+export class OctapusGame extends Localized(LitElement) {
+  static styles = [i18nStyles, css`
     *,*::before,*::after { box-sizing: border-box; }
 
     :host {
@@ -443,7 +449,7 @@ export class OctapusGame extends LitElement {
       .stat-card { animation: none; }
       .modal-backdrop, .modal-card { animation: none; }
     }
-  `;
+  `];
 
   // ─── Public API (contract) ─────────────────────────────────────────────
   @property({ type: String }) mode: 'levels' | 'random' = 'levels';
@@ -746,7 +752,7 @@ export class OctapusGame extends LitElement {
     this._persistState(nextLevel);
 
     this._phase = 'won';
-    this._announce = isGameComplete ? 'Tüm seviyeler tamamlandı!' : 'Seviye tamamlandı!';
+    this._announce = this.t(isGameComplete ? 'common.announceAllDone' : 'common.announceLevelDone');
     if (isGameComplete) this._dispatch('og-game-complete', { gameId: GAME_ID, totalMs: this._totalPlayMs });
   }
 
@@ -826,9 +832,9 @@ export class OctapusGame extends LitElement {
         type="button"
         @click=${this._toggleTheme}
         aria-pressed=${isLight.toString()}
-        aria-label=${isLight ? 'Koyu temaya geç' : 'Açık temaya geç'}
-        title=${isLight ? 'Koyu tema' : 'Açık tema'}
-      >${isLight ? '☀️ Tema: Açık' : '🌙 Tema: Koyu'}</button>
+        aria-label=${this.t(isLight ? 'common.switchToDark' : 'common.switchToLight')}
+        title=${this.t(isLight ? 'common.themeDarkTitle' : 'common.themeLightTitle')}
+      >${isLight ? '☀️' : '🌙'} ${this.t(isLight ? 'common.themeLight' : 'common.themeDark')}</button>
     `;
   }
 
@@ -836,16 +842,17 @@ export class OctapusGame extends LitElement {
     const secs = Math.floor(this._elapsed / 1000);
     const m = String(Math.floor(secs / 60)).padStart(2, '0');
     const s = String(secs % 60).padStart(2, '0');
+    const levelText = this.mode === 'levels'
+      ? this.t('common.level', { level: this._currentLevel, total: this.levelCount })
+      : this.t('common.freeMode');
     return html`
       <div class="hud" part="hud">
         <div class="hud-left">
+          ${renderLanguagePicker(this.locale)}
           ${this._renderThemeToggle()}
           <slot name="host-controls"></slot>
         </div>
-        <div class="level-chip">
-          ${this.mode === 'levels' ? html`Seviye ${this._currentLevel}/${this.levelCount}` : html`Serbest Mod`}
-          · ${m}:${s}
-        </div>
+        <div class="level-chip">${levelText} · ${m}:${s}</div>
       </div>
     `;
   }
@@ -859,7 +866,7 @@ export class OctapusGame extends LitElement {
         aria-valuenow=${pct}
         aria-valuemin="0"
         aria-valuemax="100"
-        aria-label="Kapıya ilerleme"
+        aria-label=${this.t('octapus.progress')}
       >
         <div class="progress-fill" style="width:${pct}%"></div>
       </div>
@@ -934,13 +941,13 @@ export class OctapusGame extends LitElement {
     const isDraining = this._phase === 'draining' || this._phase === 'won';
 
     return html`
-      <div class="board-wrap">
+      <div class="board-wrap ltr-lock">
         <svg
           part="board"
           class="maze ${this._shaking ? 'shake' : ''}"
           viewBox="0 0 ${viewSize} ${viewSize}"
           role="application"
-          aria-label="Octapus tahtası. Kapıya ilerleme yüzde ${Math.round(this._progress * 100)}. Bir hücreye tıklayarak ya da ok tuşları/WASD ile hareket et."
+          aria-label=${this.t('octapus.boardAria', { pct: Math.round(this._progress * 100) })}
           tabindex="0"
           @keydown=${this._handleKey}
           @pointerdown=${this._handlePointerDown}
@@ -963,10 +970,16 @@ export class OctapusGame extends LitElement {
     return html`
       <div class="overlay">
         <div class="emoji">🐙</div>
-        <h2>Octapus</h2>
-        <p>Ahtapotu kaçış giderine ulaştır. Bir yola tıkla, ahtapot süzülsün.</p>
-        <button class="btn-primary" part="button" @click=${this._startLevel} aria-label="Oyunu başlat">Başla</button>
+        <h2>${this.t('octapus.title')}</h2>
+        <p>${this.t('octapus.tagline')}</p>
+        <button
+          class="btn-primary"
+          part="button"
+          @click=${this._startLevel}
+          aria-label=${this.t('common.startAria')}
+        >${this.t('common.start')}</button>
         <div class="idle-controls">
+          ${renderLanguagePicker(this.locale)}
           ${this._renderThemeToggle()}
           <slot name="host-controls"></slot>
         </div>
@@ -981,26 +994,30 @@ export class OctapusGame extends LitElement {
     const m = String(Math.floor(totalSecs / 60)).padStart(2, '0');
     const s = String(totalSecs % 60).padStart(2, '0');
     const isGameComplete = this.mode === 'levels' && this._currentLevel >= this.levelCount;
-    const label = isGameComplete ? 'Tekrar Oyna' : this.mode === 'random' ? 'Yeni Bölüm →' : 'Devam →';
+    const label = isGameComplete
+      ? this.t('common.playAgain')
+      : this.mode === 'random'
+        ? `${this.t('common.newBoard')} ${this.arrow}`
+        : `${this.t('common.continue')} ${this.arrow}`;
 
     return html`
       <div class="modal-backdrop">
         <div class="modal-card" part="modal">
           <div class="emoji">${isGameComplete ? '🏆' : '✨'}</div>
-          <h2>${isGameComplete ? 'Tebrikler!' : 'Seviye Tamam!'}</h2>
+          <h2>${this.t(isGameComplete ? 'common.congrats' : 'common.levelDone')}</h2>
           <div class="stats-row">
             <div class="stat-card ${this._lastResultIsBest ? 'is-best' : ''}">
               <span class="stat-icon">⏱️</span>
               <span class="stat-value">${m}:${s}</span>
-              <span class="stat-label">Süre</span>
+              <span class="stat-label">${this.t('common.time')}</span>
             </div>
             <div class="stat-card">
               <span class="stat-icon">👣</span>
               <span class="stat-value">${this._moves}</span>
-              <span class="stat-label">Hamle</span>
+              <span class="stat-label">${this.t('common.moves')}</span>
             </div>
           </div>
-          ${this._lastResultIsBest ? html`<div class="best-badge">🌟 Yeni Rekor!</div>` : nothing}
+          ${this._lastResultIsBest ? html`<div class="best-badge">🌟 ${this.t('common.newRecord')}</div>` : nothing}
           <button class="btn-primary" part="button" @click=${this._nextLevel} aria-label=${label}>${label}</button>
         </div>
       </div>
