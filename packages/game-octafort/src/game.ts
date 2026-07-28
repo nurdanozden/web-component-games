@@ -285,9 +285,36 @@ export class OctafortGame extends LitElement {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
       gap: .5rem;
       margin-bottom: .7rem;
     }
+    .hud-group { display: flex; align-items: center; gap: .4rem; min-width: 0; }
+    /* Host sayfanın kendi düğmelerini (mod, ses vb.) tema düğmesinin yanına
+       yerleştirebilmesi için — game-octapus ve game-octahang ile aynı sözleşme. */
+    ::slotted(*) { flex: none; }
+
+    .theme-toggle {
+      cursor: pointer;
+      border: none;
+      border-radius: 999px;
+      flex: none;
+      display: inline-flex;
+      align-items: center;
+      gap: .3rem;
+      padding: .3rem .55rem;
+      font-family: inherit;
+      font-size: .75rem;
+      font-weight: 600;
+      line-height: 1;
+      background: var(--_fill);
+      color: inherit;
+      transition: background .15s, transform .15s;
+    }
+    .theme-toggle:hover { background: var(--_fill-strong); }
+    .theme-toggle:active { transform: scale(.92); }
+    .theme-toggle:focus-visible { outline: 3px solid var(--og-accent, var(--_accent)); outline-offset: 2px; }
+
     .level-chip {
       font-size: .7rem;
       font-weight: 700;
@@ -299,7 +326,6 @@ export class OctafortGame extends LitElement {
       border-radius: 999px;
       white-space: nowrap;
     }
-    .hud-actions { display: flex; gap: .4rem; }
     button.ghost {
       cursor: pointer;
       border: 1px solid var(--_line);
@@ -447,6 +473,9 @@ export class OctafortGame extends LitElement {
     .overlay h2 { margin: 0; font-size: 1.5rem; font-weight: 800; }
     .overlay p { margin: 0; color: var(--_text-dim); font-size: .9rem; max-width: 34ch; line-height: 1.5; }
     .overlay .emoji { font-size: 3rem; }
+    /* Başlangıç ekranında da tema düğmesi ve host düğmeleri aynı yerde dursun;
+       oyun başlayınca aynı slot HUD'a taşınır, düğmeler yerinden oynamaz. */
+    .overlay-top { display: flex; justify-content: center; align-items: center; gap: .4rem; flex-wrap: wrap; }
     .legend {
       display: flex;
       gap: 1.1rem;
@@ -543,10 +572,12 @@ export class OctafortGame extends LitElement {
       padding: .6rem 1.4rem;
       font-size: .9rem;
       font-weight: 600;
-      background: linear-gradient(135deg, var(--og-primary, var(--_primary)), var(--og-accent, var(--_accent)));
+      /* Düz renk — degrade yok. Üç oyunda da aynı düğme dili kullanılır. */
+      background: var(--og-primary, var(--_primary));
       color: #fff;
-      transition: transform .15s;
+      transition: transform .15s, filter .15s;
     }
+    button.btn-primary:hover { filter: brightness(1.1); }
     button.btn-primary:active { transform: scale(.97); }
     button.btn-primary:focus-visible { outline: 3px solid var(--og-accent, var(--_accent)); outline-offset: 2px; }
 
@@ -865,6 +896,13 @@ export class OctafortGame extends LitElement {
     this._startLevel();
   };
 
+  /** Tema düğmesi HUD'ın içinde durur; host sayfa kendi yüzeyini de çevirebilsin
+   *  diye değişiklik og-theme-change ile dışarı bildirilir. */
+  private _toggleTheme = () => {
+    this.theme = this.theme === 'dark' ? 'light' : 'dark';
+    this._dispatch('og-theme-change', { gameId: GAME_ID, theme: this.theme });
+  };
+
   // ─── Audio (Web Audio API) ──────────────────────────────────────────────
   private _audioCtx() {
     if (!this._ctx) this._ctx = new AudioContext();
@@ -912,17 +950,36 @@ export class OctafortGame extends LitElement {
   }
 
   // ─── Render ──────────────────────────────────────────────────────────────
+  private _renderThemeToggle() {
+    const isLight = this.theme === 'light';
+    return html`
+      <button
+        class="theme-toggle"
+        part="theme-toggle"
+        type="button"
+        @click=${this._toggleTheme}
+        aria-pressed=${isLight.toString()}
+        aria-label=${isLight ? 'Koyu temaya geç' : 'Açık temaya geç'}
+        title=${isLight ? 'Koyu tema' : 'Açık tema'}
+      >${isLight ? '☀️ Tema: Açık' : '🌙 Tema: Koyu'}</button>
+    `;
+  }
+
   private _renderHUD() {
     const secs = Math.floor(this._elapsed / 1000);
     const m = String(Math.floor(secs / 60)).padStart(2, '0');
     const s = String(secs % 60).padStart(2, '0');
     return html`
       <div class="hud" part="hud">
-        <div class="level-chip">
-          ${this.mode === 'levels' ? html`Seviye ${this._currentLevel}/${this.levelCount}` : html`Serbest Mod`}
-          · ${this._size}×${this._size} · ${m}:${s}
+        <div class="hud-group">
+          ${this._renderThemeToggle()}
+          <slot name="host-controls"></slot>
         </div>
-        <div class="hud-actions">
+        <div class="hud-group">
+          <div class="level-chip">
+            ${this.mode === 'levels' ? html`Seviye ${this._currentLevel}/${this.levelCount}` : html`Serbest Mod`}
+            · ${this._size}×${this._size} · ${m}:${s}
+          </div>
           <button class="ghost" part="button" @click=${this._resetBoard} aria-label="Tahtayı temizle">Sıfırla</button>
         </div>
       </div>
@@ -1019,6 +1076,7 @@ export class OctafortGame extends LitElement {
 
   private _renderIdle() {
     return html`
+      <div class="overlay-top">${this._renderThemeToggle()}<slot name="host-controls"></slot></div>
       <div class="overlay">
         <div class="emoji">🏰</div>
         <h2>Octafort</h2>

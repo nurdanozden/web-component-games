@@ -46,7 +46,8 @@ describe('og-octafort event contract', () => {
 
     const handler = vi.fn();
     el.addEventListener('og-level-start', handler);
-    const startButton = el.shadowRoot!.querySelector('button') as HTMLButtonElement;
+    // Başlangıç ekranındaki ilk düğme tema düğmesidir; "Başla" sınıfıyla seçilir.
+    const startButton = el.shadowRoot!.querySelector('button.btn-primary') as HTMLButtonElement;
     startButton.click();
 
     expect(handler).toHaveBeenCalledTimes(1);
@@ -62,7 +63,7 @@ describe('og-octafort event contract', () => {
       el = createGame();
       document.body.appendChild(el);
       await el.updateComplete;
-      (el.shadowRoot!.querySelector('button') as HTMLButtonElement).click();
+      (el.shadowRoot!.querySelector('button.btn-primary') as HTMLButtonElement).click();
 
       const order: string[] = [];
       el.addEventListener('og-level-complete', (e) => order.push((e as CustomEvent).type));
@@ -97,11 +98,43 @@ describe('og-octafort event contract', () => {
     expect(el.getAttribute('theme')).toBe('light');
   });
 
+  it('flips the theme from the HUD toggle and announces it with og-theme-change', async () => {
+    el = createGame();
+    document.body.appendChild(el);
+    await el.updateComplete;
+
+    const handler = vi.fn();
+    el.addEventListener('og-theme-change', handler);
+    (el.shadowRoot!.querySelector('button.theme-toggle') as HTMLButtonElement).click();
+    await el.updateComplete;
+
+    expect(el.theme).toBe('light');
+    expect(el.getAttribute('theme')).toBe('light');
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect((handler.mock.calls[0][0] as CustomEvent).detail).toEqual({
+      gameId: 'game-octafort',
+      theme: 'light',
+    });
+  });
+
+  it('offers the host-controls slot both on the idle screen and in the HUD', async () => {
+    el = createGame();
+    document.body.appendChild(el);
+    await el.updateComplete;
+    expect(el.shadowRoot!.querySelector('slot[name="host-controls"]')).not.toBeNull();
+
+    // Aynı slot adı oyun başlayınca HUD'da bulunur; host'un projekte ettiği
+    // düğmeler geçişte kaybolmaz.
+    (el.shadowRoot!.querySelector('button.btn-primary') as HTMLButtonElement).click();
+    await el.updateComplete;
+    expect(el.shadowRoot!.querySelector('slot[name="host-controls"]')).not.toBeNull();
+  });
+
   it('recognises the reference solution as a conflict-free win state', async () => {
     el = createGame();
     document.body.appendChild(el);
     await el.updateComplete;
-    (el.shadowRoot!.querySelector('button') as HTMLButtonElement).click();
+    (el.shadowRoot!.querySelector('button.btn-primary') as HTMLButtonElement).click();
 
     const internals = el as unknown as Internals;
     internals._cells = Uint8Array.from(internals._puzzle.solution).map((v) => (v ? 2 : 0));
@@ -119,7 +152,7 @@ describe('og-octafort puzzle generation', () => {
       el.seed = seed;
       document.body.appendChild(el);
       await el.updateComplete;
-      (el.shadowRoot!.querySelector('button') as HTMLButtonElement).click();
+      (el.shadowRoot!.querySelector('button.btn-primary') as HTMLButtonElement).click();
 
       const internals = el as unknown as Internals;
       const { size, regions, solution } = internals._puzzle;
