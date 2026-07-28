@@ -7,6 +7,7 @@ import {
   i18nStyles,
   renderLanguagePicker,
 } from '@octapull-games/core';
+import { GameState, LevelResult } from '@octapull-games/core';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -228,6 +229,8 @@ function regionHue(region: number): number {
 
 export class OctafortGame extends Localized(LitElement) {
   static styles = [i18nStyles, css`
+export class OctafortGame extends LitElement {
+  static styles = css`
     *, *::before, *::after { box-sizing: border-box; }
 
     :host {
@@ -240,6 +243,7 @@ export class OctafortGame extends Localized(LitElement) {
       --_text: #f8fafc;
       --_text-dim: #94a3b8;
       --_wall: #06d3f7;      /* sector ramparts — turquoise */
+      --_wall: #64748b;      /* sector ramparts — soft slate, not neon */
       --_border: #334155;
       --_shadow: 0 20px 25px -5px rgba(0,0,0,.4), 0 8px 10px -6px rgba(0,0,0,.3);
       --_line: rgba(255,255,255,.10);
@@ -276,6 +280,8 @@ export class OctafortGame extends Localized(LitElement) {
       --_text: #0f172a;
       --_text-dim: #8daec1;
       --_wall: #03d3f8;
+      --_text-dim: #64748b;
+      --_wall: #94a3b8;
       --_border: #e2e8f0;
       --_shadow: 0 20px 25px -5px rgba(15,23,42,.08), 0 8px 10px -6px rgba(15,23,42,.04);
       --_line: rgba(15,23,42,.10);
@@ -321,6 +327,9 @@ export class OctafortGame extends Localized(LitElement) {
     .theme-toggle:active { transform: scale(.92); }
     .theme-toggle:focus-visible { outline: 3px solid var(--og-accent, var(--_accent)); outline-offset: 2px; }
 
+      gap: .5rem;
+      margin-bottom: .7rem;
+    }
     .level-chip {
       font-size: .7rem;
       font-weight: 700;
@@ -332,6 +341,7 @@ export class OctafortGame extends Localized(LitElement) {
       border-radius: 999px;
       white-space: nowrap;
     }
+    .hud-actions { display: flex; gap: .4rem; }
     button.ghost {
       cursor: pointer;
       border: 1px solid var(--_line);
@@ -584,6 +594,10 @@ export class OctafortGame extends Localized(LitElement) {
       transition: transform .15s, filter .15s;
     }
     button.btn-primary:hover { filter: brightness(1.1); }
+      background: linear-gradient(135deg, var(--og-primary, var(--_primary)), var(--og-accent, var(--_accent)));
+      color: #fff;
+      transition: transform .15s;
+    }
     button.btn-primary:active { transform: scale(.97); }
     button.btn-primary:focus-visible { outline: 3px solid var(--og-accent, var(--_accent)); outline-offset: 2px; }
 
@@ -602,6 +616,7 @@ export class OctafortGame extends Localized(LitElement) {
       .overlay, .modal-backdrop, .modal-card, .stat-card { animation: none; }
     }
   `];
+  `;
 
   // ─── Public API (contract) ─────────────────────────────────────────────
   @property({ type: String }) mode: 'levels' | 'random' = 'levels';
@@ -838,6 +853,7 @@ export class OctafortGame extends Localized(LitElement) {
     clearTimeout(this._winTimer);
     this._phase = 'winning';
     this._announce = this.t('octafort.announceWin');
+    this._announce = 'Tüm kuleler yerleştirildi, güvende!';
     this._playTone('win');
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     this._winTimer = window.setTimeout(() => this._handleWin(), reduced ? 0 : WIN_ANIMATION_MS);
@@ -879,6 +895,7 @@ export class OctafortGame extends Localized(LitElement) {
 
     this._phase = 'won';
     this._announce = this.t(isGameComplete ? 'common.announceAllDone' : 'common.announceLevelDone');
+    this._announce = isGameComplete ? 'Tüm seviyeler tamamlandı!' : 'Seviye tamamlandı!';
     if (isGameComplete) this._dispatch('og-game-complete', { gameId: GAME_ID, totalMs: this._totalPlayMs });
   }
 
@@ -995,6 +1012,14 @@ export class OctafortGame extends Localized(LitElement) {
             @click=${this._resetBoard}
             aria-label=${this.t('octafort.resetAria')}
           >${this.t('octafort.reset')}</button>
+    return html`
+      <div class="hud" part="hud">
+        <div class="level-chip">
+          ${this.mode === 'levels' ? html`Seviye ${this._currentLevel}/${this.levelCount}` : html`Serbest Mod`}
+          · ${this._size}×${this._size} · ${m}:${s}
+        </div>
+        <div class="hud-actions">
+          <button class="ghost" part="button" @click=${this._resetBoard} aria-label="Tahtayı temizle">Sıfırla</button>
         </div>
       </div>
     `;
@@ -1010,6 +1035,7 @@ export class OctafortGame extends Localized(LitElement) {
         aria-valuemin="0"
         aria-valuemax="100"
         aria-label=${this.t('octafort.progress')}
+        aria-label="Yerleştirilen kuleler"
       >
         <div class="progress-fill" style="width:${pct}%"></div>
       </div>
@@ -1057,6 +1083,9 @@ export class OctafortGame extends Localized(LitElement) {
       const label =
         this.t('octafort.cellPos', { row: r + 1, col: c + 1, region: region + 1 }) +
         ' ' + this.t(stateKey);
+      const label =
+        `Satır ${r + 1}, sütun ${c + 1}, sektör ${region + 1}. ` +
+        (v === TOWER ? (isConflict ? 'Kule — kural ihlali.' : 'Kule.') : v === MARK ? 'Sur işareti.' : 'Boş.');
 
       cells.push(html`
         <button
@@ -1075,12 +1104,14 @@ export class OctafortGame extends Localized(LitElement) {
 
     return html`
       <div class="board-wrap ltr-lock">
+      <div class="board-wrap">
         <div class="board">
           <div
             part="board"
             class="grid ${this._shaking ? 'shake' : ''}"
             role="grid"
             aria-label=${this.t('octafort.boardAria', { n })}
+            aria-label="Octafort tahtası, ${n} çarpı ${n}. Bir hücreye dokunmak sırayla sur, kule ve boş durumları arasında geçiş yaptırır. Ok tuşlarıyla gezinip Boşluk ile değiştir."
             style="grid-template-columns:repeat(${n}, 1fr);"
             @keydown=${(e: KeyboardEvent) => this._handleKey(e)}
           >
@@ -1113,6 +1144,19 @@ export class OctafortGame extends Localized(LitElement) {
           @click=${this._startLevel}
           aria-label=${this.t('common.startAria')}
         >${this.t('common.start')}</button>
+      <div class="overlay">
+        <div class="emoji">🏰</div>
+        <h2>Octafort</h2>
+        <p>
+          Her satıra, sütuna ve renkli güvenlik bölgelerine tam olarak bir
+          Kale yerleştir. Kaleler sınır komşusu olamaz (çapraz bile!).
+        </p>
+        <div class="legend">
+          <span>🏰 Kule</span>
+          <span>✕ Sur (eleme)</span>
+        </div>
+        <p style="opacity:.55;font-size:.8rem">Dokun: Sur → Kule → Boş</p>
+        <button class="btn-primary" part="button" @click=${this._startLevel} aria-label="Oyunu başlat">Başla</button>
       </div>
     `;
   }
@@ -1129,17 +1173,20 @@ export class OctafortGame extends Localized(LitElement) {
       : this.mode === 'random'
         ? `${this.t('common.newBoard')} ${this.arrow}`
         : `${this.t('common.continue')} ${this.arrow}`;
+    const label = isGameComplete ? 'Tekrar Oyna' : this.mode === 'random' ? 'Yeni Bölüm →' : 'Devam →';
 
     return html`
       <div class="modal-backdrop">
         <div class="modal-card" part="modal">
           <div class="emoji">${isGameComplete ? '🏆' : '🏰'}</div>
           <h2>${this.t(isGameComplete ? 'common.congrats' : 'octafort.safe')}</h2>
+          <h2>${isGameComplete ? 'Tebrikler!' : 'Güvende!'}</h2>
           <div class="stats-row">
             <div class="stat-card ${this._lastResultIsBest ? 'is-best' : ''}">
               <span class="stat-icon">⏱️</span>
               <span class="stat-value">${m}:${s}</span>
               <span class="stat-label">${this.t('common.time')}</span>
+              <span class="stat-label">Süre</span>
             </div>
             <div class="stat-card">
               <span class="stat-icon">👆</span>
@@ -1148,6 +1195,10 @@ export class OctafortGame extends Localized(LitElement) {
             </div>
           </div>
           ${this._lastResultIsBest ? html`<div class="best-badge">🌟 ${this.t('common.newRecord')}</div>` : nothing}
+              <span class="stat-label">Hamle</span>
+            </div>
+          </div>
+          ${this._lastResultIsBest ? html`<div class="best-badge">🌟 Yeni Rekor!</div>` : nothing}
           <button class="btn-primary" part="button" @click=${this._nextLevel} aria-label=${label}>${label}</button>
         </div>
       </div>

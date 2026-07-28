@@ -48,6 +48,7 @@ describe('og-octafort event contract', () => {
     el.addEventListener('og-level-start', handler);
     // Başlangıç ekranındaki ilk düğme tema düğmesidir; "Başla" sınıfıyla seçilir.
     const startButton = el.shadowRoot!.querySelector('button.btn-primary') as HTMLButtonElement;
+    const startButton = el.shadowRoot!.querySelector('button') as HTMLButtonElement;
     startButton.click();
 
     expect(handler).toHaveBeenCalledTimes(1);
@@ -64,6 +65,7 @@ describe('og-octafort event contract', () => {
       document.body.appendChild(el);
       await el.updateComplete;
       (el.shadowRoot!.querySelector('button.btn-primary') as HTMLButtonElement).click();
+      (el.shadowRoot!.querySelector('button') as HTMLButtonElement).click();
 
       const order: string[] = [];
       el.addEventListener('og-level-complete', (e) => order.push((e as CustomEvent).type));
@@ -135,6 +137,7 @@ describe('og-octafort event contract', () => {
     document.body.appendChild(el);
     await el.updateComplete;
     (el.shadowRoot!.querySelector('button.btn-primary') as HTMLButtonElement).click();
+    (el.shadowRoot!.querySelector('button') as HTMLButtonElement).click();
 
     const internals = el as unknown as Internals;
     internals._cells = Uint8Array.from(internals._puzzle.solution).map((v) => (v ? 2 : 0));
@@ -153,6 +156,7 @@ describe('og-octafort puzzle generation', () => {
       document.body.appendChild(el);
       await el.updateComplete;
       (el.shadowRoot!.querySelector('button.btn-primary') as HTMLButtonElement).click();
+      (el.shadowRoot!.querySelector('button') as HTMLButtonElement).click();
 
       const internals = el as unknown as Internals;
       const { size, regions, solution } = internals._puzzle;
