@@ -9,6 +9,29 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /* The page follows the component's theme: the game reflects a `theme`
+       attribute and fires `og-theme-change`, and the script below mirrors that
+       onto <body class="theme-dark">. Everything on the page reads these
+       variables so the whole surface flips, not just the game card. */
+    :root {
+      --page-bg: #b0b8bdc5;
+      --page-fg: #64748b;
+      --page-muted: rgba(22, 32, 46, .65);
+      --page-title: #c25e00;
+      --panel-line: rgba(22, 32, 46, .14);
+      --panel-fill: rgba(22, 32, 46, .04);
+      --game-shadow: 0 20px 45px rgba(20, 30, 50, .12), 0 0 0 1px rgba(22, 32, 46, .08);
+    }
+    body.theme-dark {
+      --page-bg: #0f172a;
+      --page-fg: #94a3b8;
+      --page-muted: rgba(234, 242, 255, .65);
+      --page-title: #ff9900;
+      --panel-line: rgba(255, 255, 255, .15);
+      --panel-fill: rgba(255, 255, 255, .05);
+      --game-shadow: 0 20px 45px rgba(0, 0, 0, .35), 0 0 0 1px rgba(255, 255, 255, .08);
+    }
+
     body {
       min-height: 100dvh;
       display: flex;
@@ -16,9 +39,11 @@
       align-items: center;
       justify-content: flex-start;
       gap: 1.25rem;
-      background: #071018;
+      background: var(--page-bg);
+      color: var(--page-fg);
       font-family: 'Inter', system-ui, sans-serif;
       padding: 2rem 1.5rem 3rem;
+      transition: background .2s ease, color .2s ease;
     }
     @supports (justify-content: safe center) {
       body { justify-content: safe center; }
@@ -30,7 +55,7 @@
       font-weight: 700;
       letter-spacing: .12em;
       text-transform: uppercase;
-      color: #ff9900;
+      color: var(--page-title);
       opacity: .85;
     }
 
@@ -43,39 +68,27 @@
 
       width: 100%;
       max-width: 640px;
-      box-shadow: 0 0 60px rgba(0, 102, 204, 0.2), 0 0 0 1px rgba(255,153,0,.15);
+      box-shadow: var(--game-shadow);
+      transition: box-shadow .2s ease;
     }
 
+    /* #controls is projected into the game's own "host-controls" slot, right
+       next to its built-in theme toggle — on the idle/start screen and then
+       in the HUD once play begins. Compact icon-style buttons fit both. */
     #controls {
-      width: 100%;
-      max-width: 640px;
       display: flex;
-      gap: .5rem;
-      justify-content: center;
-    }
-    /* Once play starts, #controls is moved into the game's own
-       "host-controls" slot, right next to its theme toggle — swap to
-       small icon-style buttons so the pair fits the HUD row. */
-    #controls.in-hud {
-      width: auto;
-      max-width: none;
       gap: .35rem;
     }
     #controls button {
       cursor: pointer;
-      border: 1px solid rgba(255,255,255,.15);
-      background: rgba(255,255,255,.05);
-      color: #eaf2ff;
-      border-radius: 8px;
-      padding: .4rem .8rem;
-      font-size: .8rem;
-      font-weight: 600;
-      transition: background .15s, border-color .15s, color .15s;
-    }
-    #controls.in-hud button {
+      border: 1px solid var(--panel-line);
+      background: var(--panel-fill);
+      color: var(--page-fg);
+      border-radius: 999px;
       padding: .3rem .55rem;
       font-size: .75rem;
-      border-radius: 999px;
+      font-weight: 600;
+      transition: background .15s, border-color .15s, color .15s;
     }
     #toggle-mode.is-levels {
       border-color: rgba(0,102,204,.6);
@@ -86,53 +99,67 @@
       background: rgba(255,153,0,.18);
     }
     #toggle-mute.is-muted {
-      border-color: rgba(255,255,255,.15);
-      background: rgba(255,255,255,.05);
-      color: rgba(234,242,255,.55);
+      border-color: var(--panel-line);
+      background: var(--panel-fill);
+      color: var(--page-muted);
     }
     #toggle-mute.is-unmuted {
       border-color: rgba(0,204,140,.6);
       background: rgba(0,204,140,.16);
-      color: #eaf2ff;
+      color: var(--page-fg);
     }
 
     #event-log {
       width: 100%;
       max-width: 640px;
-      background: rgba(255,255,255,.03);
-      border: 1px solid rgba(255,255,255,.08);
+      background: var(--panel-fill);
+      border: 1px solid var(--panel-line);
       border-radius: 12px;
       padding: .75rem 1rem;
       font-size: .75rem;
-      color: rgba(200,200,220,.6);
+      color: var(--page-muted);
       font-family: 'Courier New', monospace;
       max-height: 110px;
       overflow-y: auto;
     }
     #event-log p { margin: .1rem 0; }
-    #event-log .ts { color: #ff9900; }
+    #event-log .ts { color: var(--page-title); }
 
     #mode-hint {
       width: 100%;
       max-width: 640px;
       margin: -0.5rem 0 0;
       font-size: .9rem;
-      color: rgba(234, 242, 255, .65);
+      color: var(--page-muted);
       text-align: center;
     }
   </style>
 </head>
-<body>
+<body class="theme-dark">
   <header>
     <h1>Octapull Games · Octapus</h1>
   </header>
 
-  <og-octapus id="game" mode="levels" levelCount="8"></og-octapus>
+  <og-octapus id="game" mode="levels" levelCount="8" theme="dark"></og-octapus>
   <script>
-    // Runs before the module script below, so the attribute is correct
+    // Runs before the module script below, so the attributes are correct
     // by the time the custom element upgrades.
     var savedMode = sessionStorage.getItem('octapus-mode');
     if (savedMode) document.getElementById('game').setAttribute('mode', savedMode);
+    var savedTheme = sessionStorage.getItem('octapus-theme');
+    if (savedTheme) {
+      document.getElementById('game').setAttribute('theme', savedTheme);
+      document.body.classList.toggle('theme-dark', savedTheme === 'dark');
+    }
+
+    // Dil, boyamadan önce uygulanır: aksi hâlde sayfa bir kare LTR açılıp
+    // Arapçaya geçtiğinde göz kırpması (FOUC) olur. Anahtar core/i18n.ts ile
+    // aynıdır (og-lang); modül yüklendiğinde changeLanguage aynı değeri okur.
+    var savedLang = localStorage.getItem('og-lang');
+    if (savedLang) {
+      document.documentElement.setAttribute('lang', savedLang);
+      document.documentElement.setAttribute('dir', savedLang === 'ar' ? 'rtl' : 'ltr');
+    }
   </script>
 
   <p id="mode-hint">İpucu: Oyuna ısınmak için "Seviyeler" moduyla başlayıp kolaydan zora ilerleyebilirsiniz.</p>
@@ -167,21 +194,26 @@
       game.addEventListener(ev, (e) => addLog(e.type, e.detail));
     });
 
+    // The theme toggle lives inside the game; the page mirrors it so the whole
+    // surface flips together instead of just the game card.
+    game.addEventListener('og-theme-change', (e) => {
+      const theme = e.detail.theme;
+      document.body.classList.toggle('theme-dark', theme === 'dark');
+      sessionStorage.setItem('octapus-theme', theme);
+      addLog('og-theme-change', e.detail);
+    });
+
     // The hint only makes sense on the idle/start screen — hide it once play begins.
     const modeHint = document.getElementById('mode-hint');
     game.addEventListener('og-level-start', () => { modeHint.style.display = 'none'; }, { once: true });
 
-    // #controls stays in its normal spot below the "Başla" screen; once play
-    // actually starts it's moved into the game's own "host-controls" slot,
-    // right next to the built-in theme toggle in the HUD.
+    // #controls is projected into the game's own "host-controls" slot from the
+    // start, right next to the built-in theme toggle — on the idle/start
+    // screen first, then inside the HUD once play begins (same slot, so it
+    // stays put across the transition).
     const controls = document.getElementById('controls');
-    game.addEventListener('og-level-start', () => {
-      controls.setAttribute('slot', 'host-controls');
-      game.appendChild(controls);
-      controls.classList.add('in-hud');
-      updateModeButton();
-      updateMuteButton();
-    }, { once: true });
+    controls.setAttribute('slot', 'host-controls');
+    game.appendChild(controls);
 
     game.addEventListener('og-state-change', (e) => {
       sessionStorage.setItem('octapus-state', JSON.stringify(e.detail.state));
@@ -191,27 +223,49 @@
     const modeBtn = document.getElementById('toggle-mode');
     const muteBtn = document.getElementById('toggle-mute');
 
+    // Sayfanın kendi metinleri. Oyunun içindeki metinler bileşenin sözlüğünden
+    // gelir; burada yalnızca demo kabuğuna ait olanlar çevrilir. Dil seçici
+    // oyunun HUD'ında durduğu için sayfaya ayrı bir seçici eklenmez.
+    const PAGE_TEXT = {
+      tr: { hint: 'İpucu: Oyuna ısınmak için "Seviyeler" moduyla başlayıp kolaydan zora ilerleyebilirsiniz.',
+            levels: '🧩 Mod: Seviyeler', random: '🎲 Mod: Rastgele', on: '🔊 Ses: Açık', off: '🔇 Ses: Kapalı' },
+      en: { hint: 'Tip: start in "Levels" mode to warm up, then work your way from easy to hard.',
+            levels: '🧩 Mode: Levels', random: '🎲 Mode: Random', on: '🔊 Sound: On', off: '🔇 Sound: Off' },
+      it: { hint: 'Suggerimento: inizia in modalità "Livelli" per scaldarti, poi sali dal facile al difficile.',
+            levels: '🧩 Modalità: Livelli', random: '🎲 Modalità: Casuale', on: '🔊 Audio: Acceso', off: '🔇 Audio: Spento' },
+      es: { hint: 'Consejo: empieza en modo "Niveles" para calentar y avanza de lo fácil a lo difícil.',
+            levels: '🧩 Modo: Niveles', random: '🎲 Modo: Aleatorio', on: '🔊 Sonido: Activado', off: '🔇 Sonido: Apagado' },
+      ar: { hint: 'نصيحة: ابدأ بوضع «المستويات» للإحماء ثم تدرّج من السهل إلى الصعب.',
+            levels: '🧩 الوضع: المستويات', random: '🎲 الوضع: عشوائي', on: '🔊 الصوت: مفعّل', off: '🔇 الصوت: مكتوم' },
+    };
+
+    function pageText() {
+      return PAGE_TEXT[window.ogI18n.getLanguage()] ?? PAGE_TEXT.tr;
+    }
+
     function updateModeButton() {
       const isLevels = game.mode === 'levels';
-      const compact = controls.classList.contains('in-hud');
-      modeBtn.textContent = compact
-        ? (isLevels ? '🧩 Seviyeler' : '🎲 Rastgele')
-        : (isLevels ? 'Mod Seç: Seviyeler' : 'Mod Seç: Rastgele');
+      modeBtn.textContent = isLevels ? pageText().levels : pageText().random;
       modeBtn.classList.toggle('is-levels', isLevels);
       modeBtn.classList.toggle('is-random', !isLevels);
     }
 
     function updateMuteButton() {
-      const compact = controls.classList.contains('in-hud');
-      muteBtn.textContent = compact
-        ? (game.muted ? '🔇' : '🔊')
-        : (game.muted ? 'Sesi Aç 🔇' : 'Sesi Kapat 🔊');
+      muteBtn.textContent = game.muted ? pageText().off : pageText().on;
       muteBtn.classList.toggle('is-muted', game.muted);
       muteBtn.classList.toggle('is-unmuted', !game.muted);
     }
 
-    updateModeButton();
-    updateMuteButton();
+    function updatePageLanguage() {
+      modeHint.textContent = pageText().hint;
+      updateModeButton();
+      updateMuteButton();
+    }
+
+    // Dil seçici oyunun içindedir; sayfa aynı yayını dinleyerek kendi
+    // metinlerini de aynı anda çevirir.
+    window.addEventListener('og-language-change', updatePageLanguage);
+    updatePageLanguage();
 
     modeBtn.addEventListener('click', () => {
       sessionStorage.removeItem('octapus-state');

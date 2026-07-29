@@ -113,6 +113,17 @@ tanımlamadan da doğru görünür:
 ile de hedeflenebilir. Palet, `:host([theme="light"])` / `:host` kuralları üzerinden
 dahili değişkenlerle değişir.
 
+Tema düğmesi bileşenin **kendi HUD şeridindedir** (başlangıç ekranında da aynı
+yerde durur); tıklanınca `og-theme-change` (`{ gameId, theme }`) yayınlanır ve
+host sayfa bunu dinleyip kendi yüzeyini de çevirebilir (bkz. `demo/index.html`).
+
+### Host düğmeleri için slot
+`host-controls` adlı bir slot vardır: host sayfa kendi düğmelerini (mod
+değiştirme, ses vb.) bileşenin tema düğmesinin yanına yerleştirebilir. Slot hem
+başlangıç ekranında hem de HUD'da aynı adla bulunduğu için, oyun başladığında
+düğmeler yerinden oynamaz. Bu düzen `game-octapus` ve `game-octahang` ile
+aynıdır.
+
 ### CSS custom property'leri
 Tüm renk/tipografi değerleri `--og-*` değişkenlerinden okunur ve host bunları
 **her zaman ezebilir** (host'un verdiği değer, `theme` paletinin önüne geçer):
@@ -120,6 +131,7 @@ Tüm renk/tipografi değerleri `--og-*` değişkenlerinden okunur ve host bunlar
 `--og-radius`, `--og-font`. Oyuna özgü ek değişken: `--og-octafort-wall` —
 sektörleri ayıran sur (rampart) çizgilerinin rengi (koyu temada varsayılan
 neon camgöbeği `#6fe3ff`). Dışa açılan `part`'lar:
+`hud`, `theme-toggle`, `board`, `modal`, `button`. Sektör dolgu renkleri, bulmacanın ayrılmaz
 `hud`, `board`, `modal`, `button`. Sektör dolgu renkleri, bulmacanın ayrılmaz
 bir parçası olduğu için altın-açı (golden-angle) hue dizisiyle programatik
 üretilir ve her iki temada da okunur.

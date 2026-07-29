@@ -101,6 +101,16 @@ kart ve buton renkleri düz (gradyansız) tonlardır; her iki temada da
 değişkenlerinin makul varsayılanları vardır ve host sayfa bunları
 her zaman ezebilir.
 
+Bileşen yalnızca kendi kutusunu boyar; çevresindeki sayfa host'un
+sorumluluğundadır. Sadece oyun kartının değil tüm yüzeyin birlikte
+dönmesi için `og-theme-change` event'ini dinleyip sayfa arka planını da
+güncelleyin (demo sayfası bunu `<body class="theme-dark">` ile yapar):
+```js
+game.addEventListener('og-theme-change', (e) => {
+  document.body.classList.toggle('theme-dark', e.detail.theme === 'dark');
+});
+```
+
 Oyun oynanırken görünen HUD şeridinde, tema düğmesinin hemen yanında
 `host-controls` adlı bir slot bulunur. Host sayfa kendi düğmelerini
 (mod seçimi, ses açma/kapama vb.) bu slota `slot="host-controls"`
