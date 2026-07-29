@@ -132,6 +132,7 @@ Tüm renk/tipografi değerleri `--og-*` değişkenlerinden okunur ve host bunlar
 sektörleri ayıran sur (rampart) çizgilerinin rengi (koyu temada varsayılan
 neon camgöbeği `#6fe3ff`). Dışa açılan `part`'lar:
 `hud`, `theme-toggle`, `board`, `modal`, `button`. Sektör dolgu renkleri, bulmacanın ayrılmaz
+`hud`, `board`, `modal`, `button`. Sektör dolgu renkleri, bulmacanın ayrılmaz
 bir parçası olduğu için altın-açı (golden-angle) hue dizisiyle programatik
 üretilir ve her iki temada da okunur.
 

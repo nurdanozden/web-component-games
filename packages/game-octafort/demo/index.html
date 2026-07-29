@@ -19,6 +19,9 @@
       --page-fg: #64748b;
       --panel-line: #94a3b8;
       --panel-fill: rgba(100, 116, 139, .1);
+      --page-bg: #f8fafc;
+      --page-fg: #64748b;
+      --panel-line: #e2e8f0;
     }
     body.theme-dark {
       --page-bg: #0f172a;
@@ -87,6 +90,26 @@
       transition: background .15s, border-color .15s, opacity .15s;
     }
     #controls button:hover { opacity: .75; }
+    .controls {
+      width: 100%;
+      max-width: 560px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+      justify-content: center;
+    }
+    .controls button {
+      cursor: pointer;
+      border: 1px solid var(--panel-line);
+      background: transparent;
+      color: inherit;
+      border-radius: 8px;
+      padding: .4rem .8rem;
+      font-size: .8rem;
+      font-weight: 600;
+      transition: opacity .15s;
+    }
+    .controls button:hover { opacity: .7; }
 
     #mode-hint {
       width: 100%;
@@ -137,6 +160,18 @@
   <div id="controls">
     <button id="toggle-mode">Mod: Seviyeler</button>
     <button id="toggle-mute">Ses: Açık 🔊</button>
+  </script>
+
+  <p id="mode-hint">
+    İpucu: Bir kule, kendi satırındaki/sütunundaki/bölgesindeki ve etrafındaki tüm
+    kareleri eler. Kesinlikle kule olamayacak kareleri ✕ (sur) ile işaretleyerek
+    ilerle. Dokun: <b>✕ → 🏰 → boş</b>.
+  </p>
+
+  <div class="controls">
+    <button id="toggle-mode">Modu Değiştir (levels/random)</button>
+    <button id="toggle-theme">Tema: Koyu/Açık</button>
+    <button id="toggle-mute">Sesi Aç/Kapat</button>
   </div>
 
   <script type="module">
@@ -212,11 +247,36 @@
     // metinlerini de aynı anda çevirir.
     window.addEventListener('og-language-change', updatePageLanguage);
     updatePageLanguage();
+    const modeBtn = document.getElementById('toggle-mode');
+    const themeBtn = document.getElementById('toggle-theme');
+    const muteBtn = document.getElementById('toggle-mute');
+
+    function updateModeButton() {
+      modeBtn.textContent = game.mode === 'levels' ? 'Mod: Seviyeler' : 'Mod: Rastgele';
+    }
+    function updateThemeButton() {
+      themeBtn.textContent = game.theme === 'dark' ? 'Tema: Koyu 🌙' : 'Tema: Açık ☀️';
+    }
+    function updateMuteButton() {
+      muteBtn.textContent = game.muted ? 'Ses: Kapalı 🔇' : 'Ses: Açık 🔊';
+    }
+
+    updateModeButton();
+    updateThemeButton();
+    updateMuteButton();
 
     modeBtn.addEventListener('click', () => {
       sessionStorage.removeItem('octafort-state');
       sessionStorage.setItem('octafort-mode', game.mode === 'levels' ? 'random' : 'levels');
       location.reload();
+    });
+
+    themeBtn.addEventListener('click', () => {
+      const next = game.theme === 'dark' ? 'light' : 'dark';
+      game.theme = next;
+      document.body.classList.toggle('theme-dark', next === 'dark');
+      sessionStorage.setItem('octafort-theme', next);
+      updateThemeButton();
     });
 
     muteBtn.addEventListener('click', () => {
