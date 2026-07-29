@@ -161,6 +161,59 @@ export interface Messages {
   'octahang.announceWrong': string;
   'octahang.announceFound': string;
   'octahang.announceOutOfLives': string;
+
+  // ── Octanum ──────────────────────────────────────────────────────────────
+  'octanum.title': string;
+  'octanum.tagline': string;
+  'octanum.taglineSub': string;
+  'octanum.idleFigureAria': string;
+  'octanum.targetLabel': string;
+  'octanum.targetAria': string;
+  'octanum.cardsAria': string;
+  'octanum.cardAria': string;
+  'octanum.cardAriaSelected': string;
+  'octanum.cardAriaBlocked': string;
+  'octanum.opsAria': string;
+  'octanum.opAdd': string;
+  'octanum.opSub': string;
+  'octanum.opMul': string;
+  'octanum.opDiv': string;
+  'octanum.undo': string;
+  'octanum.undoAria': string;
+  'octanum.reset': string;
+  'octanum.resetAria': string;
+  'octanum.finish': string;
+  'octanum.finishAria': string;
+  'octanum.stepsTitle': string;
+  'octanum.stepsEmpty': string;
+  'octanum.timeLabel': string;
+  'octanum.hintPickFirst': string;
+  'octanum.hintPickOp': string;
+  'octanum.hintPickSecond': string;
+  'octanum.hintLast': string;
+  'octanum.ruleNegative': string;
+  'octanum.ruleFraction': string;
+  'octanum.exact': string;
+  'octanum.near': string;
+  'octanum.far': string;
+  'octanum.timeUp': string;
+  'octanum.reached': string;
+  'octanum.diffLabel': string;
+  'octanum.score': string;
+  'octanum.solutionLabel': string;
+  'octanum.resultAria': string;
+  'octanum.nextFormula': string;
+  'octanum.nextLevel': string;
+  'octanum.retry': string;
+  'octanum.allDone': string;
+  'octanum.announceRound': string;
+  'octanum.announceMove': string;
+  'octanum.announceInvalid': string;
+  'octanum.announceUndo': string;
+  'octanum.announceReset': string;
+  'octanum.announceExact': string;
+  'octanum.announceFinish': string;
+  'octanum.announceTimeUp': string;
 }
 
 export type MessageKey = keyof Messages;
@@ -252,6 +305,59 @@ export const translations: Record<Locale, Messages> = {
     'octahang.announceWrong': '{letter} yanlış. Kalan hak: {n}.',
     'octahang.announceFound': 'Kelime bulundu!',
     'octahang.announceOutOfLives': 'Haklar bitti. Doğru kelime: {word}.',
+
+    'octanum.title': 'Octanum',
+    'octanum.tagline':
+      'Simyacının kazanında bileşenleri karıştır: dört işlemle hedef formülün sayısına ulaş.',
+    'octanum.taglineSub': 'Her bileşen bir kez kullanılır; işlemin sonucu yeni bir bileşen olur.',
+    'octanum.idleFigureAria': 'Ateşte kaynayan, içine sayılar atılan simya imbiği',
+    'octanum.targetLabel': 'Hedef Formül',
+    'octanum.targetAria': 'Hedef sayı {n}',
+    'octanum.cardsAria': 'İksir bileşenleri',
+    'octanum.cardAria': '{value} değerinde bileşen',
+    'octanum.cardAriaSelected': ', seçili',
+    'octanum.cardAriaBlocked': ', bu işlemle kullanılamaz',
+    'octanum.opsAria': 'İşlem kazanları',
+    'octanum.opAdd': 'Toplama',
+    'octanum.opSub': 'Çıkarma',
+    'octanum.opMul': 'Çarpma',
+    'octanum.opDiv': 'Bölme',
+    'octanum.undo': 'Geri Al',
+    'octanum.undoAria': 'Son işlemi geri al',
+    'octanum.reset': 'Sıfırla',
+    'octanum.resetAria': 'Bölümün başındaki bileşenlere dön',
+    'octanum.finish': 'Tamamla',
+    'octanum.finishAria': 'Formülü bitir ve puanı hesapla',
+    'octanum.stepsTitle': 'Karışım Defteri',
+    'octanum.stepsEmpty': 'Henüz bir karışım yapmadın.',
+    'octanum.timeLabel': 'Kalan süre',
+    'octanum.hintPickFirst': 'Bir bileşen seç',
+    'octanum.hintPickOp': 'Bir işlem kazanı seç',
+    'octanum.hintPickSecond': 'İkinci bileşeni seç',
+    'octanum.hintLast': 'Tek bileşen kaldı — formülü tamamla.',
+    'octanum.ruleNegative': 'Çıkarmada büyük sayı önce seçilir.',
+    'octanum.ruleFraction': 'Bölme tam olmalı, kesir çıkamaz.',
+    'octanum.exact': 'Tam İsabet!',
+    'octanum.near': 'Az Kaldı!',
+    'octanum.far': 'Formül Tutmadı',
+    'octanum.timeUp': 'Süre Doldu!',
+    'octanum.reached': 'Ulaşılan',
+    'octanum.diffLabel': 'Fark',
+    'octanum.score': 'Puan',
+    'octanum.solutionLabel': 'Simyacının formülü',
+    'octanum.resultAria': 'Tur sonucu',
+    'octanum.nextFormula': 'Yeni Formül',
+    'octanum.nextLevel': 'Sonraki Seviye',
+    'octanum.retry': 'Tekrar Dene',
+    'octanum.allDone': 'Bütün formüller tamamlandı!',
+    'octanum.announceRound': 'Yeni tur. Hedef {target}. Bileşenler: {numbers}.',
+    'octanum.announceMove': '{a} {op} {b} eşittir {r}.',
+    'octanum.announceInvalid': 'Bu karışım kararsız.',
+    'octanum.announceUndo': 'Son işlem geri alındı.',
+    'octanum.announceReset': 'Bileşenler başa döndü.',
+    'octanum.announceExact': 'Tam isabet! Hedef formül tutturuldu.',
+    'octanum.announceFinish': 'Tur bitti. Ulaşılan {value}, fark {diff}.',
+    'octanum.announceTimeUp': 'Süre doldu.',
   },
 
   // ── English ──────────────────────────────────────────────────────────────
@@ -340,6 +446,59 @@ export const translations: Record<Locale, Messages> = {
     'octahang.announceWrong': '{letter} is wrong. {n} lives remaining.',
     'octahang.announceFound': 'Word found!',
     'octahang.announceOutOfLives': 'Out of lives. The word was {word}.',
+
+    'octanum.title': 'Octanum',
+    'octanum.tagline':
+      "Mix the ingredients in the alchemist's cauldron: reach the target formula using the four operations.",
+    'octanum.taglineSub': 'Each ingredient is used once; the result of an operation becomes a new ingredient.',
+    'octanum.idleFigureAria': 'An alchemical flask boiling over a flame with numbers dropping into it',
+    'octanum.targetLabel': 'Target Formula',
+    'octanum.targetAria': 'Target number {n}',
+    'octanum.cardsAria': 'Potion ingredients',
+    'octanum.cardAria': 'Ingredient worth {value}',
+    'octanum.cardAriaSelected': ', selected',
+    'octanum.cardAriaBlocked': ', not usable with this operation',
+    'octanum.opsAria': 'Operation cauldrons',
+    'octanum.opAdd': 'Addition',
+    'octanum.opSub': 'Subtraction',
+    'octanum.opMul': 'Multiplication',
+    'octanum.opDiv': 'Division',
+    'octanum.undo': 'Undo',
+    'octanum.undoAria': 'Undo the last operation',
+    'octanum.reset': 'Reset',
+    'octanum.resetAria': 'Return to the ingredients you started with',
+    'octanum.finish': 'Finish',
+    'octanum.finishAria': 'End the formula and score the round',
+    'octanum.stepsTitle': 'Mixing Notes',
+    'octanum.stepsEmpty': 'You have not mixed anything yet.',
+    'octanum.timeLabel': 'Time left',
+    'octanum.hintPickFirst': 'Pick an ingredient',
+    'octanum.hintPickOp': 'Pick an operation cauldron',
+    'octanum.hintPickSecond': 'Pick the second ingredient',
+    'octanum.hintLast': 'One ingredient left — finish the formula.',
+    'octanum.ruleNegative': 'In a subtraction the larger number comes first.',
+    'octanum.ruleFraction': 'Division must be exact, no fractions.',
+    'octanum.exact': 'Perfect Match!',
+    'octanum.near': 'So Close!',
+    'octanum.far': 'The Formula Failed',
+    'octanum.timeUp': "Time's Up!",
+    'octanum.reached': 'Reached',
+    'octanum.diffLabel': 'Difference',
+    'octanum.score': 'Score',
+    'octanum.solutionLabel': "The alchemist's formula",
+    'octanum.resultAria': 'Round result',
+    'octanum.nextFormula': 'New Formula',
+    'octanum.nextLevel': 'Next Level',
+    'octanum.retry': 'Try Again',
+    'octanum.allDone': 'Every formula completed!',
+    'octanum.announceRound': 'New round. Target {target}. Ingredients: {numbers}.',
+    'octanum.announceMove': '{a} {op} {b} equals {r}.',
+    'octanum.announceInvalid': 'That mixture is unstable.',
+    'octanum.announceUndo': 'Last operation undone.',
+    'octanum.announceReset': 'Ingredients are back to the start.',
+    'octanum.announceExact': 'Perfect match! The target formula is complete.',
+    'octanum.announceFinish': 'Round over. Reached {value}, difference {diff}.',
+    'octanum.announceTimeUp': 'Time is up.',
   },
 
   // ── Italiano ─────────────────────────────────────────────────────────────
@@ -428,6 +587,59 @@ export const translations: Record<Locale, Messages> = {
     'octahang.announceWrong': '{letter} è sbagliata. {n} vite rimaste.',
     'octahang.announceFound': 'Parola trovata!',
     'octahang.announceOutOfLives': 'Vite esaurite. La parola era {word}.',
+
+    'octanum.title': 'Octanum',
+    'octanum.tagline':
+      "Mescola gli ingredienti nel calderone dell'alchimista: raggiungi il numero della formula obiettivo con le quattro operazioni.",
+    'octanum.taglineSub': "Ogni ingrediente si usa una sola volta; il risultato di un'operazione diventa un nuovo ingrediente.",
+    'octanum.idleFigureAria': 'Alambicco alchemico che bolle sul fuoco, con numeri che cadono dentro',
+    'octanum.targetLabel': 'Formula Obiettivo',
+    'octanum.targetAria': 'Numero obiettivo {n}',
+    'octanum.cardsAria': 'Ingredienti della pozione',
+    'octanum.cardAria': 'Ingrediente del valore di {value}',
+    'octanum.cardAriaSelected': ', selezionato',
+    'octanum.cardAriaBlocked': ', non utilizzabile con questa operazione',
+    'octanum.opsAria': 'Calderoni delle operazioni',
+    'octanum.opAdd': 'Addizione',
+    'octanum.opSub': 'Sottrazione',
+    'octanum.opMul': 'Moltiplicazione',
+    'octanum.opDiv': 'Divisione',
+    'octanum.undo': 'Annulla',
+    'octanum.undoAria': "Annulla l'ultima operazione",
+    'octanum.reset': 'Azzera',
+    'octanum.resetAria': "Torna agli ingredienti dell'inizio",
+    'octanum.finish': 'Concludi',
+    'octanum.finishAria': 'Termina la formula e calcola il punteggio',
+    'octanum.stepsTitle': 'Quaderno delle Miscele',
+    'octanum.stepsEmpty': 'Non hai ancora mescolato nulla.',
+    'octanum.timeLabel': 'Tempo rimasto',
+    'octanum.hintPickFirst': 'Scegli un ingrediente',
+    'octanum.hintPickOp': "Scegli un calderone dell'operazione",
+    'octanum.hintPickSecond': 'Scegli il secondo ingrediente',
+    'octanum.hintLast': 'È rimasto un solo ingrediente — concludi la formula.',
+    'octanum.ruleNegative': 'Nella sottrazione viene prima il numero più grande.',
+    'octanum.ruleFraction': 'La divisione deve essere esatta, niente frazioni.',
+    'octanum.exact': 'Centro Perfetto!',
+    'octanum.near': 'Per Poco!',
+    'octanum.far': 'La Formula è Fallita',
+    'octanum.timeUp': 'Tempo Scaduto!',
+    'octanum.reached': 'Raggiunto',
+    'octanum.diffLabel': 'Differenza',
+    'octanum.score': 'Punti',
+    'octanum.solutionLabel': "La formula dell'alchimista",
+    'octanum.resultAria': 'Risultato del turno',
+    'octanum.nextFormula': 'Nuova Formula',
+    'octanum.nextLevel': 'Livello Successivo',
+    'octanum.retry': 'Riprova',
+    'octanum.allDone': 'Tutte le formule completate!',
+    'octanum.announceRound': 'Nuovo turno. Obiettivo {target}. Ingredienti: {numbers}.',
+    'octanum.announceMove': '{a} {op} {b} fa {r}.',
+    'octanum.announceInvalid': 'Questa miscela è instabile.',
+    'octanum.announceUndo': 'Ultima operazione annullata.',
+    'octanum.announceReset': "Gli ingredienti sono tornati all'inizio.",
+    'octanum.announceExact': 'Centro perfetto! La formula obiettivo è completa.',
+    'octanum.announceFinish': 'Turno finito. Raggiunto {value}, differenza {diff}.',
+    'octanum.announceTimeUp': 'Il tempo è scaduto.',
   },
 
   // ── Español ──────────────────────────────────────────────────────────────
@@ -516,6 +728,59 @@ export const translations: Record<Locale, Messages> = {
     'octahang.announceWrong': '{letter} es incorrecta. Quedan {n} vidas.',
     'octahang.announceFound': '¡Palabra encontrada!',
     'octahang.announceOutOfLives': 'Sin vidas. La palabra era {word}.',
+
+    'octanum.title': 'Octanum',
+    'octanum.tagline':
+      'Mezcla los ingredientes en el caldero del alquimista: alcanza el número de la fórmula objetivo con las cuatro operaciones.',
+    'octanum.taglineSub': 'Cada ingrediente se usa una vez; el resultado de una operación se convierte en un ingrediente nuevo.',
+    'octanum.idleFigureAria': 'Alambique alquímico hirviendo al fuego, con números que caen dentro',
+    'octanum.targetLabel': 'Fórmula Objetivo',
+    'octanum.targetAria': 'Número objetivo {n}',
+    'octanum.cardsAria': 'Ingredientes de la poción',
+    'octanum.cardAria': 'Ingrediente con valor {value}',
+    'octanum.cardAriaSelected': ', seleccionado',
+    'octanum.cardAriaBlocked': ', no se puede usar con esta operación',
+    'octanum.opsAria': 'Calderos de operaciones',
+    'octanum.opAdd': 'Suma',
+    'octanum.opSub': 'Resta',
+    'octanum.opMul': 'Multiplicación',
+    'octanum.opDiv': 'División',
+    'octanum.undo': 'Deshacer',
+    'octanum.undoAria': 'Deshacer la última operación',
+    'octanum.reset': 'Reiniciar',
+    'octanum.resetAria': 'Volver a los ingredientes iniciales',
+    'octanum.finish': 'Terminar',
+    'octanum.finishAria': 'Cerrar la fórmula y calcular la puntuación',
+    'octanum.stepsTitle': 'Cuaderno de Mezclas',
+    'octanum.stepsEmpty': 'Todavía no has mezclado nada.',
+    'octanum.timeLabel': 'Tiempo restante',
+    'octanum.hintPickFirst': 'Elige un ingrediente',
+    'octanum.hintPickOp': 'Elige un caldero de operación',
+    'octanum.hintPickSecond': 'Elige el segundo ingrediente',
+    'octanum.hintLast': 'Queda un solo ingrediente: termina la fórmula.',
+    'octanum.ruleNegative': 'En la resta va primero el número mayor.',
+    'octanum.ruleFraction': 'La división debe ser exacta, sin fracciones.',
+    'octanum.exact': '¡Diana Perfecta!',
+    'octanum.near': '¡Por Poco!',
+    'octanum.far': 'La Fórmula Falló',
+    'octanum.timeUp': '¡Se Acabó el Tiempo!',
+    'octanum.reached': 'Alcanzado',
+    'octanum.diffLabel': 'Diferencia',
+    'octanum.score': 'Puntos',
+    'octanum.solutionLabel': 'La fórmula del alquimista',
+    'octanum.resultAria': 'Resultado de la ronda',
+    'octanum.nextFormula': 'Nueva Fórmula',
+    'octanum.nextLevel': 'Siguiente Nivel',
+    'octanum.retry': 'Inténtalo de Nuevo',
+    'octanum.allDone': '¡Todas las fórmulas completadas!',
+    'octanum.announceRound': 'Nueva ronda. Objetivo {target}. Ingredientes: {numbers}.',
+    'octanum.announceMove': '{a} {op} {b} es igual a {r}.',
+    'octanum.announceInvalid': 'Esa mezcla es inestable.',
+    'octanum.announceUndo': 'Última operación deshecha.',
+    'octanum.announceReset': 'Los ingredientes han vuelto al inicio.',
+    'octanum.announceExact': '¡Diana perfecta! La fórmula objetivo está completa.',
+    'octanum.announceFinish': 'Ronda terminada. Alcanzado {value}, diferencia {diff}.',
+    'octanum.announceTimeUp': 'Se acabó el tiempo.',
   },
 
   // ── العربية ──────────────────────────────────────────────────────────────
@@ -604,6 +869,59 @@ export const translations: Record<Locale, Messages> = {
     'octahang.announceWrong': '{letter} خاطئ. المحاولات المتبقية: {n}.',
     'octahang.announceFound': 'تم إيجاد الكلمة!',
     'octahang.announceOutOfLives': 'نفدت المحاولات. الكلمة الصحيحة: {word}.',
+
+    'octanum.title': 'أوكتانوم',
+    'octanum.tagline':
+      'امزج المكوّنات في مِرجل الخيميائي: اِبلغ رقم الصيغة الهدف باستخدام العمليات الأربع.',
+    'octanum.taglineSub': 'يُستعمل كل مكوّن مرة واحدة؛ ونتيجة العملية تصبح مكوّنًا جديدًا.',
+    'octanum.idleFigureAria': 'إنبيق خيميائي يغلي على النار تتساقط فيه الأرقام',
+    'octanum.targetLabel': 'الصيغة الهدف',
+    'octanum.targetAria': 'الرقم الهدف {n}',
+    'octanum.cardsAria': 'مكوّنات الإكسير',
+    'octanum.cardAria': 'مكوّن بقيمة {value}',
+    'octanum.cardAriaSelected': '، مُحدَّد',
+    'octanum.cardAriaBlocked': '، لا يصلح مع هذه العملية',
+    'octanum.opsAria': 'مراجل العمليات',
+    'octanum.opAdd': 'جمع',
+    'octanum.opSub': 'طرح',
+    'octanum.opMul': 'ضرب',
+    'octanum.opDiv': 'قسمة',
+    'octanum.undo': 'تراجع',
+    'octanum.undoAria': 'تراجع عن آخر عملية',
+    'octanum.reset': 'إعادة تعيين',
+    'octanum.resetAria': 'العودة إلى مكوّنات البداية',
+    'octanum.finish': 'إنهاء',
+    'octanum.finishAria': 'أنهِ الصيغة واحسب النقاط',
+    'octanum.stepsTitle': 'دفتر المزج',
+    'octanum.stepsEmpty': 'لم تمزج شيئًا بعد.',
+    'octanum.timeLabel': 'الوقت المتبقي',
+    'octanum.hintPickFirst': 'اختر مكوّنًا',
+    'octanum.hintPickOp': 'اختر مِرجل عملية',
+    'octanum.hintPickSecond': 'اختر المكوّن الثاني',
+    'octanum.hintLast': 'بقي مكوّن واحد — أنهِ الصيغة.',
+    'octanum.ruleNegative': 'في الطرح يأتي العدد الأكبر أولًا.',
+    'octanum.ruleFraction': 'يجب أن تكون القسمة تامّة بلا كسور.',
+    'octanum.exact': 'إصابة تامّة!',
+    'octanum.near': 'اقتربت كثيرًا!',
+    'octanum.far': 'فشلت الصيغة',
+    'octanum.timeUp': 'انتهى الوقت!',
+    'octanum.reached': 'المُحقَّق',
+    'octanum.diffLabel': 'الفارق',
+    'octanum.score': 'النقاط',
+    'octanum.solutionLabel': 'صيغة الخيميائي',
+    'octanum.resultAria': 'نتيجة الجولة',
+    'octanum.nextFormula': 'صيغة جديدة',
+    'octanum.nextLevel': 'المستوى التالي',
+    'octanum.retry': 'حاول مجددًا',
+    'octanum.allDone': 'اكتملت كل الصيغ!',
+    'octanum.announceRound': 'جولة جديدة. الهدف {target}. المكوّنات: {numbers}.',
+    'octanum.announceMove': '{a} {op} {b} يساوي {r}.',
+    'octanum.announceInvalid': 'هذا المزيج غير مستقر.',
+    'octanum.announceUndo': 'تم التراجع عن آخر عملية.',
+    'octanum.announceReset': 'عادت المكوّنات إلى البداية.',
+    'octanum.announceExact': 'إصابة تامّة! اكتملت الصيغة الهدف.',
+    'octanum.announceFinish': 'انتهت الجولة. المُحقَّق {value}، الفارق {diff}.',
+    'octanum.announceTimeUp': 'انتهى الوقت.',
   },
 };
 

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Octanum – og-octanum Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* The host page owns the background — the component is a self-contained box,
+       so this demo uses a flat surface and simply centres the game the way a
+       modal/panel would. */
+    :root {
+      --page-bg: #b0b8bdc5;
+      --page-fg: #64748b;
+      --panel-line: #94a3b8;
+      --panel-fill: rgba(100, 116, 139, .1);
+    }
+    body.theme-dark {
+      --page-bg: #0f172a;
+      --page-fg: #94a3b8;
+      --panel-line: #334155;
+      --panel-fill: rgba(148, 163, 184, .08);
+    }
+
+    body {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 1.1rem;
+      background: var(--page-bg);
+      color: var(--page-fg);
+      font-family: 'Inter', system-ui, sans-serif;
+      padding: 1.75rem 1.25rem 3rem;
+      transition: background .2s ease, color .2s ease;
+    }
+    @supports (justify-content: safe center) {
+      body { justify-content: safe center; }
+    }
+
+    header { text-align: center; }
+    header h1 {
+      font-size: .95rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      opacity: .65;
+    }
+
+    /* Stand-in for the platform modal the game will really live inside:
+       a container that hugs the component with empty margins around it.
+       The component has no width of its own — it fills this box, so this is
+       the single knob that sets how large the game reads on the page. */
+    .modal-shell {
+      width: 100%;
+      max-width: 600px;
+    }
+
+    og-octanum {
+      /* Only --og-font is themed by the page here; the component supplies its
+         own light/dark palette via the theme attribute below. */
+      --og-font: 'Inter', system-ui, sans-serif;
+      display: block;
+      width: 100%;
+    }
+
+    /* #controls is projected into the game's own "host-controls" slot, right
+       next to its built-in theme toggle — on the idle/start screen and then in
+       the HUD once play begins. Compact pill buttons fit both. */
+    #controls { display: flex; gap: .35rem; }
+    #controls button {
+      cursor: pointer;
+      border: 1px solid var(--panel-line);
+      background: var(--panel-fill);
+      color: inherit;
+      border-radius: 999px;
+      padding: .3rem .55rem;
+      font-family: inherit;
+      font-size: .75rem;
+      font-weight: 600;
+      transition: background .15s, border-color .15s, opacity .15s;
+    }
+    #controls button:hover { opacity: .75; }
+
+    #mode-hint {
+      width: 100%;
+      max-width: 600px; /* oyun kutusuyla aynı hizada dursun */
+      margin: -0.25rem 0 0;
+      font-size: .9rem;
+      opacity: .75;
+      text-align: center;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body class="theme-dark">
+  <header>
+    <h1>Octapull Games · Octanum</h1>
+  </header>
+
+  <div class="modal-shell">
+    <og-octanum id="game" mode="levels" levelCount="8" theme="dark"></og-octanum>
+  </div>
+  <script>
+    // Runs before the module script below, so attributes are correct by the
+    // time the custom element upgrades.
+    var savedMode = sessionStorage.getItem('octanum-mode');
+    if (savedMode) document.getElementById('game').setAttribute('mode', savedMode);
+    var savedTheme = sessionStorage.getItem('octanum-theme');
+    if (savedTheme) {
+      document.getElementById('game').setAttribute('theme', savedTheme);
+      document.body.classList.toggle('theme-dark', savedTheme === 'dark');
+    }
+
+    // Dil, boyamadan önce uygulanır: aksi hâlde sayfa bir kare LTR açılıp
+    // Arapçaya geçtiğinde göz kırpması (FOUC) olur. Anahtar core/i18n.ts ile
+    // aynıdır (og-lang); modül yüklendiğinde changeLanguage aynı değeri okur.
+    var savedLang = localStorage.getItem('og-lang');
+    if (savedLang) {
+      document.documentElement.setAttribute('lang', savedLang);
+      document.documentElement.setAttribute('dir', savedLang === 'ar' ? 'rtl' : 'ltr');
+    }
+  </script>
+
+  <p id="mode-hint">
+    İpucu: Bileşenlere fareyle dokunabilir ya da klavyeden 1–6 rakamlarıyla
+    seçip + − × ÷ tuşlarıyla karıştırabilirsin.
+  </p>
+
+  <div id="controls">
+    <button id="toggle-mode">Mod: Seviyeler</button>
+    <button id="toggle-mute">Ses: Açık 🔊</button>
+  </div>
+
+  <script type="module">
+    import '../src/index.ts';
+
+    const game = document.getElementById('game');
+
+    // Restore state from sessionStorage between reloads (demo only — the
+    // component itself never touches local storage).
+    const saved = sessionStorage.getItem('octanum-state');
+    if (saved) {
+      try { game.state = JSON.parse(saved); } catch (_) {}
+    }
+
+    // #controls is projected into the game's own "host-controls" slot from the
+    // start: next to the built-in theme toggle on the idle screen first, then
+    // inside the HUD once play begins (same slot, so it stays put).
+    const controls = document.getElementById('controls');
+    controls.setAttribute('slot', 'host-controls');
+    game.appendChild(controls);
+
+    // The hint only makes sense before play begins — hide it once a round starts.
+    const modeHint = document.getElementById('mode-hint');
+    game.addEventListener('og-level-start', () => { modeHint.style.display = 'none'; }, { once: true });
+
+    game.addEventListener('og-state-change', (e) => {
+      sessionStorage.setItem('octanum-state', JSON.stringify(e.detail.state));
+    });
+
+    // The theme toggle lives inside the game; the page mirrors it so the whole
+    // surface flips together instead of just the game card.
+    game.addEventListener('og-theme-change', (e) => {
+      document.body.classList.toggle('theme-dark', e.detail.theme === 'dark');
+      sessionStorage.setItem('octanum-theme', e.detail.theme);
+    });
+
+    const modeBtn = document.getElementById('toggle-mode');
+    const muteBtn = document.getElementById('toggle-mute');
+
+    // Sayfanın kendi metinleri. Oyunun içindekiler bileşenin sözlüğünden gelir;
+    // burada yalnızca demo kabuğuna ait olanlar çevrilir. Dil seçici oyunun
+    // HUD'ında durduğu için sayfaya ayrı bir seçici eklenmez.
+    const PAGE_TEXT = {
+      tr: { hint: 'İpucu: Bileşenlere fareyle dokunabilir ya da klavyeden 1–6 rakamlarıyla seçip + − × ÷ tuşlarıyla karıştırabilirsin.',
+            levels: 'Mod: Seviyeler', random: 'Mod: Rastgele', on: 'Ses: Açık 🔊', off: 'Ses: Kapalı 🔇' },
+      en: { hint: 'Tip: tap the ingredients, or pick them with the 1–6 keys and mix using + − × ÷.',
+            levels: 'Mode: Levels', random: 'Mode: Random', on: 'Sound: On 🔊', off: 'Sound: Off 🔇' },
+      it: { hint: 'Suggerimento: tocca gli ingredienti, oppure selezionali con i tasti 1–6 e mescola con + − × ÷.',
+            levels: 'Modalità: Livelli', random: 'Modalità: Casuale', on: 'Audio: Acceso 🔊', off: 'Audio: Spento 🔇' },
+      es: { hint: 'Consejo: toca los ingredientes o elígelos con las teclas 1–6 y mézclalos con + − × ÷.',
+            levels: 'Modo: Niveles', random: 'Modo: Aleatorio', on: 'Sonido: Activado 🔊', off: 'Sonido: Apagado 🔇' },
+      ar: { hint: 'نصيحة: انقر على المكوّنات، أو اخترها بالمفاتيح ١–٦ وامزجها بـ + − × ÷.',
+            levels: 'الوضع: المستويات', random: 'الوضع: عشوائي', on: 'الصوت: مفعّل 🔊', off: 'الصوت: مكتوم 🔇' },
+    };
+
+    function pageText() {
+      return PAGE_TEXT[window.ogI18n.getLanguage()] ?? PAGE_TEXT.tr;
+    }
+
+    function updateModeButton() {
+      modeBtn.textContent = game.mode === 'levels' ? pageText().levels : pageText().random;
+    }
+    function updateMuteButton() {
+      muteBtn.textContent = game.muted ? pageText().off : pageText().on;
+    }
+
+    function updatePageLanguage() {
+      modeHint.textContent = pageText().hint;
+      updateModeButton();
+      updateMuteButton();
+    }
+
+    // Dil seçici oyunun içindedir; sayfa aynı yayını dinleyerek kendi
+    // metinlerini de aynı anda çevirir.
+    window.addEventListener('og-language-change', updatePageLanguage);
+    updatePageLanguage();
+
+    modeBtn.addEventListener('click', () => {
+      sessionStorage.removeItem('octanum-state');
+      sessionStorage.setItem('octanum-mode', game.mode === 'levels' ? 'random' : 'levels');
+      location.reload();
+    });
+
+    muteBtn.addEventListener('click', () => {
+      game.muted = !game.muted;
+      updateMuteButton();
+    });
+  </script>
+</body>
+</html>
