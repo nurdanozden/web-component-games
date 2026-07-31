@@ -22,20 +22,20 @@ Bileşenler belirli bir ürüne veya çatıya (framework) bağlı değildir; dü
 /
 ├── packages/
 │   ├── core/                # Ortak yardımcılar: taban sınıf, zamanlayıcı, ses, tipler
-│   ├── game-ornek/          # Referans oyun (bu yapıyı kopyalayarak başlayın)
+│   ├── game-<oyun-adi>/     # Her oyun bu iskeleti izler
 │   │   ├── src/
 │   │   │   ├── index.ts     # customElements.define çağrısı burada
 │   │   │   └── game.ts      # Bileşen sınıfı
 │   │   ├── demo/index.html  # Bağımsız çalışan demo sayfası
 │   │   ├── package.json
 │   │   └── README.md        # Oyunun kuralları ve level tasarımı
-│   └── game-<oyun-adi>/
+│   └── ...
 ├── docs/                    # Bu sözleşmenin ekleri, tasarım notları
 └── package.json             # Workspace tanımı
 ```
 
 - Her oyun `packages/game-<oyun-adi>` altında ayrı bir paket olarak yaşar.
-- Etiket adları `og-` (Octapull Games) öneki ile başlar: `<og-fermuar>`, `<og-hafiza>`, `<og-refleks>` gibi. Önek, ad çakışmalarını önlemek için zorunludur.
+- Etiket adları `og-` (Octapull Games) öneki ile başlar: `<og-octapus>`, `<og-octafort>`, `<og-octahang>` gibi. Önek, ad çakışmalarını önlemek için zorunludur.
 - Ortak kod tekrarı görüldüğünde `packages/core` altına taşınır; oyunlar core'a bağımlı olabilir, birbirine bağımlı olamaz.
 
 ## 3. Bileşen Sözleşmesi
@@ -169,7 +169,7 @@ Bu bölümdeki kurallar tartışmaya kapalıdır; tereddüt edilen her durumda g
 
 ```bash
 npm install
-npm run dev --workspace=packages/game-ornek   # Referans oyunu çalıştırır
+npm run dev --workspace=packages/game-octapus   # Bir oyunun demosunu çalıştırır
 ```
 
-Yeni oyuna başlarken `packages/game-ornek` kopyalanır, paket adı ve etiket adı güncellenir, oyunun README dosyası doldurulur. Sorular için önce bu doküman, ardından `docs/` klasörü kontrol edilir; yanıt bulunamazsa proje sorumlusuna danışılır.
+Yeni oyuna başlarken mevcut oyunlardan biri (örneğin `packages/game-octapus`) kopyalanır, paket adı ve etiket adı güncellenir, oyunun README dosyası doldurulur. Sorular için önce bu doküman, ardından `docs/` klasörü kontrol edilir; yanıt bulunamazsa proje sorumlusuna danışılır.

@@ -4,8 +4,10 @@ import {
   GameState,
   LevelResult,
   Localized,
+  SettingsMenuController,
   i18nStyles,
-  renderLanguagePicker,
+  renderSettingsMenu,
+  settingsMenuStyles,
 } from '@octapull-games/core';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -150,7 +152,7 @@ function buildMaze(size: number, rng?: () => number, deadEndBias = 0): MazeData 
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export class OctapusGame extends Localized(LitElement) {
-  static styles = [i18nStyles, css`
+  static styles = [i18nStyles, settingsMenuStyles, css`
     *,*::before,*::after { box-sizing: border-box; }
 
     :host {
@@ -159,15 +161,26 @@ export class OctapusGame extends Localized(LitElement) {
       /* Dark theme tokens. The public --og-* variables stay overridable by the
          host page (outer-tree rules beat :host); the private --_* ones cover
          board details that aren't part of the public contract but still have
-         to flip with the theme. */
-      --og-bg: #0b1220;
-      --og-surface: #111d2f;
+         to flip with the theme.
+
+         The greys match Octameet's right-hand "Uygulamalar" panel, which is
+         where this component is embedded: the maze surface separates from the
+         card by getting lighter, not darker. --_fill/--_fill-strong are dark
+         only on purpose — the light theme leaves them undefined so every rule
+         that reads them falls back to its original color-mix value. */
+      --og-bg: #404040;
+      --og-surface: #515151;
       --og-primary: #0066cc;
-      --og-accent: #ff9900;
-      --og-text: #eaf2ff;
-      --_wall: #4d9bff;
-      --_board-border: rgba(234, 242, 255, .10);
-      --_backdrop: rgba(4, 10, 20, .72);
+      --og-accent: #ff5f00;    /* Octameet turuncusu */
+      --og-text: #ffffff;
+      --_fill: #5c5c5c;        /* chips, toggles, tracks */
+      --_fill-strong: #6b6b6b; /* hover/active */
+      --_track: #363636;       /* recessed: progress track */
+      /* Blue walls dropped to 2.8:1 on the lighter board; white is both the
+         palette's icon colour and the readable one (7.9:1). */
+      --_wall: #ffffff;
+      --_board-border: rgba(255, 255, 255, .18);
+      --_backdrop: rgba(26, 26, 26, .72);
       --_modal-shadow: 0 24px 70px rgba(0, 0, 0, .55);
       box-sizing: border-box;
       width: 100%;
@@ -185,8 +198,15 @@ export class OctapusGame extends Localized(LitElement) {
       --og-bg: #f4f7fb;
       --og-surface: #ffffff;
       --og-primary: #0057b3;
-      --og-accent: #d97400;
+      --og-accent: #ff5f00;    /* Octameet turuncusu — iki temada da ayni */
       --og-text: #16202e;
+      /* Soft-but-present greys: the modal's stat cards and chips sit on the
+         #f4f7fb card, so they need a visible step without going dark. These
+         must be declared here — :host applies to both themes, so leaving
+         them out would let the dark greys bleed into the light theme. */
+      --_fill: #e4eaf2;
+      --_fill-strong: #dbe3ee;
+      --_track: #e4eaf2;
       --_wall: #0057b3;
       --_board-border: rgba(22, 32, 46, .12);
       --_backdrop: rgba(20, 30, 50, .45);
@@ -201,14 +221,8 @@ export class OctapusGame extends Localized(LitElement) {
       gap: .5rem;
       margin-bottom: .6rem;
     }
-    .hud-left {
-      display: flex;
-      align-items: center;
-      gap: .4rem;
-      min-width: 0;
-    }
     /* Lets a host page project its own controls (mode switch, mute, etc.)
-       right next to the built-in theme toggle instead of elsewhere on the page. */
+       into the settings menu instead of elsewhere on the page. */
     ::slotted(*) {
       flex: none;
     }
@@ -224,13 +238,13 @@ export class OctapusGame extends Localized(LitElement) {
       font-size: .75rem;
       font-weight: 600;
       line-height: 1;
-      background: color-mix(in srgb, var(--og-text) 10%, transparent);
+      background: var(--_fill, color-mix(in srgb, var(--og-text) 10%, transparent));
       color: var(--og-text);
       transition: background .15s, transform .15s;
     }
-    .theme-toggle:hover { background: color-mix(in srgb, var(--og-text) 18%, transparent); }
+    .theme-toggle:hover { background: var(--_fill-strong, color-mix(in srgb, var(--og-text) 18%, transparent)); }
     .theme-toggle:active { transform: scale(.92); }
-    .theme-toggle:focus-visible { outline: 3px solid var(--og-accent, #ff9900); outline-offset: 2px; }
+    .theme-toggle:focus-visible { outline: 3px solid var(--og-accent, #ff5f00); outline-offset: 2px; }
 
     .level-chip {
       font-size: .7rem;
@@ -238,7 +252,7 @@ export class OctapusGame extends Localized(LitElement) {
       letter-spacing: .04em;
       text-transform: uppercase;
       opacity: .75;
-      background: color-mix(in srgb, var(--og-text) 8%, transparent);
+      background: var(--_fill, color-mix(in srgb, var(--og-text) 8%, transparent));
       padding: .3rem .65rem;
       border-radius: 999px;
       white-space: nowrap;
@@ -247,14 +261,14 @@ export class OctapusGame extends Localized(LitElement) {
     .progress-track {
       height: 10px;
       border-radius: 999px;
-      background: color-mix(in srgb, var(--og-text) 8%, transparent);
+      background: var(--_track, color-mix(in srgb, var(--og-text) 8%, transparent));
       overflow: hidden;
       margin-bottom: .9rem;
     }
     .progress-fill {
       height: 100%;
       border-radius: inherit;
-      background: var(--og-accent, #ff9900);
+      background: var(--og-accent, #ff5f00);
       transition: width .25s ease;
     }
 
@@ -270,7 +284,7 @@ export class OctapusGame extends Localized(LitElement) {
       cursor: pointer;
       transition: background .2s ease, border-color .2s ease;
     }
-    .maze:focus-visible { outline: 3px solid var(--og-accent, #ff9900); outline-offset: 2px; }
+    .maze:focus-visible { outline: 3px solid var(--og-accent, #ff5f00); outline-offset: 2px; }
     .maze.shake { animation: shake .32s ease; }
     @keyframes shake {
       10%, 90% { transform: translateX(-2px); }
@@ -283,7 +297,7 @@ export class OctapusGame extends Localized(LitElement) {
       stroke-width: 2.4;
       stroke-linecap: round;
     }
-    .exit-cell { fill: var(--og-accent, #ff9900); opacity: .28; }
+    .exit-cell { fill: var(--og-accent, #ff5f00); opacity: .28; }
     :host([theme='light']) .exit-cell { opacity: .18; }
     .player-g { transition: transform .13s ease; transform-origin: 0 0; }
     .player-g.sinking {
@@ -293,7 +307,8 @@ export class OctapusGame extends Localized(LitElement) {
     .player-emoji { font-size: 20px; }
 
     .drain-hole {
-      fill: url(#drain-hole-grad);
+      /* Flat fill — the radial gradient that used to fake depth is gone. */
+      fill: #1c1c1c;
       opacity: 0;
       transition: opacity .35s ease .15s;
     }
@@ -330,12 +345,49 @@ export class OctapusGame extends Localized(LitElement) {
     .overlay h2 { margin: 0; font-size: 1.5rem; font-weight: 800; }
     .overlay p { margin: 0; opacity: .7; font-size: .9rem; }
     .overlay .emoji { font-size: 3rem; }
-    .idle-controls {
+
+    /* Start-screen figure. Sized like the idle art in the sibling games
+       (octahang's gallows, octanum's still) so the start card keeps the same
+       near-square proportions instead of collapsing into a wide strip. */
+    .idle-figure {
+      width: 100%;
+      max-width: 118px;
+      height: auto;
+      overflow: visible;
+    }
+    .idle-figure .idle-octo {
+      transform-box: view-box;
+      transform-origin: 55px 34px;
+      animation: idle-float 3.6s ease-in-out infinite;
+    }
+    @keyframes idle-float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+    .idle-figure .idle-emoji { font-size: 44px; }
+    .idle-figure .bub {
+      transform-box: view-box;
+      fill: var(--og-accent, #ff5f00);
+      animation: idle-bubble 3s ease-in-out infinite;
+    }
+    .idle-figure .bub.b2 { animation-duration: 3.8s; animation-delay: .9s; }
+    .idle-figure .bub.b3 { animation-duration: 2.6s; animation-delay: 1.7s; }
+    @keyframes idle-bubble {
+      0% { transform: translateY(4px); opacity: 0; }
+      35% { opacity: .5; }
+      100% { transform: translateY(-18px); opacity: 0; }
+    }
+    /* The drain art is the board's, drawn at a larger radius here, so its
+       hairlines need to grow with it. */
+    .idle-figure .drain-rim { stroke-width: 2.2; }
+    .idle-figure .drain-slats line { stroke-width: 3.6; }
+    .idle-figure .drain-hinge { stroke-width: 1.3; }
+    /* The start screen carries the same top-right settings button as the HUD,
+       so the control stays in one place across the whole session. */
+    .overlay-top {
       display: flex;
       align-items: center;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: .4rem;
+      justify-content: flex-end;
     }
 
     .modal-backdrop {
@@ -382,14 +434,13 @@ export class OctapusGame extends Localized(LitElement) {
       min-width: 92px;
       padding: .7rem .9rem;
       border-radius: 14px;
-      background: color-mix(in srgb, var(--og-text) 6%, transparent);
+      background: var(--_fill, color-mix(in srgb, var(--og-text) 6%, transparent));
       border: 1px solid color-mix(in srgb, var(--og-text) 14%, transparent);
       animation: popIn .35s cubic-bezier(.34,1.56,.64,1) both;
     }
-    .stat-card.is-best {
-      border-color: var(--og-accent, #ff9900);
-      box-shadow: 0 0 0 1px var(--og-accent, #ff9900), 0 0 18px rgba(255,153,0,.35);
-    }
+    /* No accent ring on a record card: both stat cards keep the same neutral
+       border. The record is still announced by the "🌟 Yeni Rekor" badge below
+       the row, so dropping the highlight costs no information. */
     .stat-card:nth-child(2) { animation-delay: .08s; }
     .stat-icon { font-size: 1.3rem; line-height: 1; }
     .stat-value {
@@ -397,7 +448,9 @@ export class OctapusGame extends Localized(LitElement) {
       font-weight: 800;
       line-height: 1.1;
       font-variant-numeric: tabular-nums;
-      color: var(--og-accent, #ff9900);
+      /* Matches the other three games: accent-on-card fell under 3:1, so the
+         number uses the text colour and the accent stays on status elements. */
+      color: var(--og-text);
     }
     .stat-label {
       font-size: .65rem;
@@ -409,7 +462,7 @@ export class OctapusGame extends Localized(LitElement) {
     .best-badge {
       font-size: .7rem;
       font-weight: 700;
-      color: var(--og-accent, #ff9900);
+      color: var(--og-accent, #ff5f00);
     }
     @keyframes popIn {
       from { opacity: 0; transform: scale(.7) translateY(6px); }
@@ -429,7 +482,7 @@ export class OctapusGame extends Localized(LitElement) {
     }
     button.btn-primary:hover { filter: brightness(1.1); }
     button.btn-primary:active { transform: scale(.97); }
-    button.btn-primary:focus-visible { outline: 3px solid var(--og-accent, #ff9900); outline-offset: 2px; }
+    button.btn-primary:focus-visible { outline: 3px solid var(--og-accent, #ff5f00); outline-offset: 2px; }
 
     .sr-only {
       position: absolute;
@@ -446,6 +499,10 @@ export class OctapusGame extends Localized(LitElement) {
       .drain-hole { transition: none; }
       .progress-fill { transition: none; }
       .overlay { animation: none; }
+      /* Ahtapot ve kabarcıklar durur; kabarcıklar animasyonun ilk karesinde
+         görünmez olduğu için burada okunur bir duruşa sabitlenir. */
+      .idle-figure .idle-octo { animation: none; }
+      .idle-figure .bub { animation: none; opacity: .45; }
       .stat-card { animation: none; }
       .modal-backdrop, .modal-card { animation: none; }
     }
@@ -477,6 +534,7 @@ export class OctapusGame extends Localized(LitElement) {
   private _startTime = 0;
   private _rafId = 0;
   private _shakeTimeout = 0;
+  private _settings = new SettingsMenuController(this);
   private _walkTimer = 0;
   private _drainTimer = 0;
   private _ctx: AudioContext | null = null;
@@ -823,19 +881,19 @@ export class OctapusGame extends Localized(LitElement) {
   }
 
   // ─── Render ──────────────────────────────────────────────────────────────
-  private _renderThemeToggle() {
-    const isLight = this.theme === 'light';
-    return html`
-      <button
-        class="theme-toggle"
-        part="theme-toggle"
-        type="button"
-        @click=${this._toggleTheme}
-        aria-pressed=${isLight.toString()}
-        aria-label=${this.t(isLight ? 'common.switchToDark' : 'common.switchToLight')}
-        title=${this.t(isLight ? 'common.themeDarkTitle' : 'common.themeLightTitle')}
-      >${isLight ? '☀️' : '🌙'} ${this.t(isLight ? 'common.themeLight' : 'common.themeDark')}</button>
-    `;
+  /**
+   * Language, theme and the host page's own controls (mode, sound) all live
+   * behind the top-right kebab button instead of crowding the bar above the
+   * maze. Same markup on the start screen and in the HUD.
+   */
+  private _renderSettings() {
+    return renderSettingsMenu({
+      locale: this.locale,
+      open: this._settings.open,
+      onTrigger: this._settings.toggle,
+      theme: this.theme,
+      onThemeToggle: () => this._toggleTheme(),
+    });
   }
 
   private _renderHUD() {
@@ -847,12 +905,8 @@ export class OctapusGame extends Localized(LitElement) {
       : this.t('common.freeMode');
     return html`
       <div class="hud" part="hud">
-        <div class="hud-left">
-          ${renderLanguagePicker(this.locale)}
-          ${this._renderThemeToggle()}
-          <slot name="host-controls"></slot>
-        </div>
         <div class="level-chip">${levelText} · ${m}:${s}</div>
+        ${this._renderSettings()}
       </div>
     `;
   }
@@ -888,11 +942,6 @@ export class OctapusGame extends Localized(LitElement) {
       slats.push(svg`<line x1=${off - r * 0.55} y1=${-r * 0.85} x2=${off + r * 0.55} y2=${r * 0.85}></line>`);
     }
     return svg`
-      <radialGradient id="drain-hole-grad" cx="50%" cy="42%" r="65%">
-        <stop offset="0%" stop-color="#000"></stop>
-        <stop offset="70%" stop-color="#000"></stop>
-        <stop offset="100%" stop-color="#101a24"></stop>
-      </radialGradient>
       <circle
         class="drain-hole ${isDraining ? 'is-open' : ''}"
         cx=${cx} cy=${cy} r=${r - 1}
@@ -966,10 +1015,51 @@ export class OctapusGame extends Localized(LitElement) {
     `;
   }
 
+  /** Start-screen art: the octopus drifting above the escape drain. Purely
+   *  decorative — the title and tagline right below carry the meaning, so it
+   *  stays out of the accessibility tree. */
+  private _renderIdleFigure() {
+    const r = 24;
+    const slats = [];
+    for (let i = 0; i < 6; i++) {
+      const off = ((i / 5) * 2 - 1) * (r - 1.5);
+      slats.push(svg`<line x1=${off - r * 0.55} y1=${-r * 0.85} x2=${off + r * 0.55} y2=${r * 0.85}></line>`);
+    }
+    return html`
+      <svg class="idle-figure" viewBox="0 0 110 132" aria-hidden="true">
+        <g class="idle-octo">
+          <text
+            class="idle-emoji"
+            x="55"
+            y="34"
+            text-anchor="middle"
+            dominant-baseline="central"
+          >🐙</text>
+        </g>
+        <circle class="bub b1" cx="34" cy="72" r="3.2"></circle>
+        <circle class="bub b2" cx="72" cy="66" r="2.2"></circle>
+        <circle class="bub b3" cx="50" cy="78" r="1.6"></circle>
+        <g class="drain-icon" transform="translate(55 105)">
+          <clipPath id="octapus-idle-drain-clip">
+            <circle r=${r}></circle>
+          </clipPath>
+          <circle class="drain-rim" r=${r + 1.6}></circle>
+          <g clip-path="url(#octapus-idle-drain-clip)">
+            <circle class="drain-face" r=${r}></circle>
+            <g class="drain-slats">${slats}</g>
+          </g>
+          <circle class="drain-bolt" r=${r * 0.14}></circle>
+          <rect class="drain-hinge" x=${-r - 2.6} y=${-r * 0.16} width="2.6" height=${r * 0.32} rx="0.7"></rect>
+        </g>
+      </svg>
+    `;
+  }
+
   private _renderIdle() {
     return html`
+      <div class="overlay-top">${this._renderSettings()}</div>
       <div class="overlay">
-        <div class="emoji">🐙</div>
+        ${this._renderIdleFigure()}
         <h2>${this.t('octapus.title')}</h2>
         <p>${this.t('octapus.tagline')}</p>
         <button
@@ -978,11 +1068,6 @@ export class OctapusGame extends Localized(LitElement) {
           @click=${this._startLevel}
           aria-label=${this.t('common.startAria')}
         >${this.t('common.start')}</button>
-        <div class="idle-controls">
-          ${renderLanguagePicker(this.locale)}
-          ${this._renderThemeToggle()}
-          <slot name="host-controls"></slot>
-        </div>
       </div>
     `;
   }
@@ -1006,7 +1091,7 @@ export class OctapusGame extends Localized(LitElement) {
           <div class="emoji">${isGameComplete ? '🏆' : '✨'}</div>
           <h2>${this.t(isGameComplete ? 'common.congrats' : 'common.levelDone')}</h2>
           <div class="stats-row">
-            <div class="stat-card ${this._lastResultIsBest ? 'is-best' : ''}">
+            <div class="stat-card">
               <span class="stat-icon">⏱️</span>
               <span class="stat-value">${m}:${s}</span>
               <span class="stat-label">${this.t('common.time')}</span>

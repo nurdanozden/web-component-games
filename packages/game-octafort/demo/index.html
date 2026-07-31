@@ -17,17 +17,22 @@
     :root {
       --page-bg: #b0b8bdc5;
       --page-fg: #64748b;
+      /* octapus demosuyla ayni: baslik Octameet turuncusu, ipucu yumusak koyu. */
+      --page-muted: rgba(22, 32, 46, .65);
+      --page-title: #ff5f00;
       --panel-line: #94a3b8;
       --panel-fill: rgba(100, 116, 139, .1);
-      --page-bg: #f8fafc;
-      --page-fg: #64748b;
-      --panel-line: #e2e8f0;
     }
     body.theme-dark {
-      --page-bg: #0f172a;
-      --page-fg: #94a3b8;
-      --panel-line: #334155;
-      --panel-fill: rgba(148, 163, 184, .08);
+      /* Octameet grileri. Sayfa zemini karttan (#404040) bir ton acik durur,
+         boylece oyun kutusu zeminin uzerinde ayrisir. */
+      --page-bg: #5c5c5c;
+      /* Eski #94a3b8 bu zeminde 2.6:1'e dusuyordu; beyaz 6.7:1 veriyor. */
+      --page-fg: #ffffff;
+      --page-muted: rgba(255, 255, 255, .8);
+      --page-title: #ff5f00;
+      --panel-line: #6b6b6b;
+      --panel-fill: rgba(255, 255, 255, .10);
     }
 
     body {
@@ -53,7 +58,8 @@
       font-weight: 700;
       letter-spacing: .12em;
       text-transform: uppercase;
-      opacity: .65;
+      color: var(--page-title);
+      opacity: .85;
     }
 
     /* Stand-in for the platform modal the game will really live inside:
@@ -73,11 +79,14 @@
          card shadow and border via its theme palette. */
     }
 
-    /* #controls is projected into the game's own "host-controls" slot, right
-       next to its built-in theme toggle — on the idle/start screen and then in
-       the HUD once play begins. Compact pill buttons fit both. */
-    #controls { display: flex; gap: .35rem; }
+    /* #controls is projected into the game's own "host-controls" slot, which
+       now lives inside the top-right settings (kebab) menu — on the idle/start
+       screen and in the HUD alike. The menu is a vertical list, so the buttons
+       stack and fill its width instead of sitting side by side. */
+    #controls { display: flex; flex-direction: column; gap: .35rem; width: 100%; }
     #controls button {
+      width: 100%;
+      text-align: start;
       cursor: pointer;
       border: 1px solid var(--panel-line);
       background: var(--panel-fill);
@@ -90,33 +99,13 @@
       transition: background .15s, border-color .15s, opacity .15s;
     }
     #controls button:hover { opacity: .75; }
-    .controls {
-      width: 100%;
-      max-width: 560px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: .5rem;
-      justify-content: center;
-    }
-    .controls button {
-      cursor: pointer;
-      border: 1px solid var(--panel-line);
-      background: transparent;
-      color: inherit;
-      border-radius: 8px;
-      padding: .4rem .8rem;
-      font-size: .8rem;
-      font-weight: 600;
-      transition: opacity .15s;
-    }
-    .controls button:hover { opacity: .7; }
 
     #mode-hint {
       width: 100%;
       max-width: 560px;
       margin: -0.25rem 0 0;
       font-size: .9rem;
-      opacity: .7;
+      color: var(--page-muted);
       text-align: center;
       line-height: 1.5;
     }
@@ -160,18 +149,6 @@
   <div id="controls">
     <button id="toggle-mode">Mod: Seviyeler</button>
     <button id="toggle-mute">Ses: Açık 🔊</button>
-  </script>
-
-  <p id="mode-hint">
-    İpucu: Bir kule, kendi satırındaki/sütunundaki/bölgesindeki ve etrafındaki tüm
-    kareleri eler. Kesinlikle kule olamayacak kareleri ✕ (sur) ile işaretleyerek
-    ilerle. Dokun: <b>✕ → 🏰 → boş</b>.
-  </p>
-
-  <div class="controls">
-    <button id="toggle-mode">Modu Değiştir (levels/random)</button>
-    <button id="toggle-theme">Tema: Koyu/Açık</button>
-    <button id="toggle-mute">Sesi Aç/Kapat</button>
   </div>
 
   <script type="module">
@@ -186,8 +163,9 @@
     }
 
     // #controls is projected into the game's own "host-controls" slot from the
-    // start: next to the built-in theme toggle on the idle screen first, then
-    // inside the HUD once play begins (same slot, so it stays put).
+    // start — that slot sits inside the settings (kebab) menu, on the idle
+    // screen first and then in the HUD once play begins (same slot, so the
+    // buttons stay put across the transition).
     const controls = document.getElementById('controls');
     controls.setAttribute('slot', 'host-controls');
     game.appendChild(controls);
@@ -247,36 +225,11 @@
     // metinlerini de aynı anda çevirir.
     window.addEventListener('og-language-change', updatePageLanguage);
     updatePageLanguage();
-    const modeBtn = document.getElementById('toggle-mode');
-    const themeBtn = document.getElementById('toggle-theme');
-    const muteBtn = document.getElementById('toggle-mute');
-
-    function updateModeButton() {
-      modeBtn.textContent = game.mode === 'levels' ? 'Mod: Seviyeler' : 'Mod: Rastgele';
-    }
-    function updateThemeButton() {
-      themeBtn.textContent = game.theme === 'dark' ? 'Tema: Koyu 🌙' : 'Tema: Açık ☀️';
-    }
-    function updateMuteButton() {
-      muteBtn.textContent = game.muted ? 'Ses: Kapalı 🔇' : 'Ses: Açık 🔊';
-    }
-
-    updateModeButton();
-    updateThemeButton();
-    updateMuteButton();
 
     modeBtn.addEventListener('click', () => {
       sessionStorage.removeItem('octafort-state');
       sessionStorage.setItem('octafort-mode', game.mode === 'levels' ? 'random' : 'levels');
       location.reload();
-    });
-
-    themeBtn.addEventListener('click', () => {
-      const next = game.theme === 'dark' ? 'light' : 'dark';
-      game.theme = next;
-      document.body.classList.toggle('theme-dark', next === 'dark');
-      sessionStorage.setItem('octafort-theme', next);
-      updateThemeButton();
     });
 
     muteBtn.addEventListener('click', () => {

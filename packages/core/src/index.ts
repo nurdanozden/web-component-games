@@ -1,4 +1,5 @@
 export * from './i18n';
+export * from './settings-menu';
 
 export interface LevelResult {
   level: number;
@@ -25,7 +26,7 @@ export const coreStyles = `
     --og-bg: #ffffff;
     --og-surface: #f4f7fb;
     --og-primary: #0066cc;
-    --og-accent: #ff9900;
+    --og-accent: #ff5f00;
     --og-text: #333333;
     --og-radius: 8px;
     --og-font: system-ui, -apple-system, sans-serif;

@@ -140,7 +140,14 @@ içindedir; idle ekranında projekte edilen içerik görünmez.
 ```
 
 ## Kullanılan Üçüncü Taraf Varlıklar
-Yok — ahtapot karakteri Unicode emoji'dir (🐙); gider kapağı ise emoji
+Bileşenin kendisinde yok — ahtapot karakteri Unicode emoji'dir (🐙); gider kapağı ise emoji
 değil, sıfırdan çizilmiş bir vektör (SVG) ikondur. Ses efektleri Web
 Audio API osilatörleriyle programatik üretilir, harici ses dosyası
 kullanılmaz.
+
+**Yazı tipi (yalnızca demo sayfası):** `demo/index.html`, gösterim amacıyla
+[Inter](https://fonts.google.com/specimen/Inter) yazı tipini Google Fonts
+üzerinden yükler; lisansı **SIL Open Font License 1.1**'dir (ticari kullanım
+dahil serbest, atıf zorunluluğu yoktur). Yazı tipi pakete dâhil edilmez ve
+bileşenin çalışması için gerekli değildir: bileşen `--og-font` değişkenini okur,
+host sayfa hangi yazı tipini verirse onu kullanır.

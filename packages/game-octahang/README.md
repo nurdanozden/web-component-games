@@ -224,9 +224,7 @@ Dışa açılan `part`'lar: `hud`, `theme-toggle`, `hint`, `stage`, `word`,
 ```
 
 > Not: Bu bileşen, girdi property'sini kök README sözleşmesindeki (§3.1) adla,
-> yani `state` olarak açar (game-octapus ve game-octafort ile aynı). Depodaki
-> bazı eski oyunlar (`game-ornek`, `game-hafiza`) bunu `gameState` olarak
-> adlandırır; host entegrasyonunda paketin kullandığı ada dikkat edin.
+> yani `state` olarak açar; depodaki bütün oyunlar aynı adı kullanır.
 
 ## Sözleşme Uyumu
 - Çalışma zamanı bağımlılığı yalnızca Lit'tir; ağ erişimi ve yerel depolama
@@ -239,7 +237,7 @@ Dışa açılan `part`'lar: `hud`, `theme-toggle`, `hint`, `stage`, `word`,
   animasyonları kapanır, sonuç paneli beklemeden açılır.
 
 ## Kullanılan Üçüncü Taraf Varlıklar
-Yok. Darağacı ve adam figürü, projeye özgü olarak yazılmış SVG yollarıdır —
+Bileşenin kendisinde yok. Darağacı ve adam figürü, projeye özgü olarak yazılmış SVG yollarıdır —
 başlangıç ekranındaki amblem de dahil: orada tahtadaki çizimin küçültülmüş bir
 kopyası (sehpa + tamamlanmış çöp adam) ipin kirişe bağlandığı noktadan hafifçe
 sallanarak durur, böylece oyuncu daha ilk bakışta oyunun ne olduğunu anlar.
@@ -247,3 +245,10 @@ Kullanılan diğer simgeler (💡, ❤️, 🎉, 💀, 🏆, ⭐, ⏱️) Unicod
 karakterlerdir. Ses efektleri Web Audio API osilatörleriyle programatik
 üretilir, harici ses dosyası kullanılmaz. Kelime havuzu ve ipucu cümleleri ekip
 tarafından yazılmıştır.
+
+**Yazı tipi (yalnızca demo sayfası):** `demo/index.html`, gösterim amacıyla
+[Inter](https://fonts.google.com/specimen/Inter) yazı tipini Google Fonts
+üzerinden yükler; lisansı **SIL Open Font License 1.1**'dir (ticari kullanım
+dahil serbest, atıf zorunluluğu yoktur). Yazı tipi pakete dâhil edilmez ve
+bileşenin çalışması için gerekli değildir: bileşen `--og-font` değişkenini okur,
+host sayfa hangi yazı tipini verirse onu kullanır.

@@ -4,8 +4,10 @@ import {
   GameState,
   LevelResult,
   Localized,
+  SettingsMenuController,
   i18nStyles,
-  renderLanguagePicker,
+  renderSettingsMenu,
+  settingsMenuStyles,
   type MessageKey,
 } from '@octapull-games/core';
 import { getWordPool } from './words';
@@ -135,31 +137,39 @@ function uniqueLetters(word: string): string[] {
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export class OctahangGame extends Localized(LitElement) {
-  static styles = [i18nStyles, css`
+  static styles = [i18nStyles, settingsMenuStyles, css`
     *, *::before, *::after { box-sizing: border-box; }
 
     :host {
       /* Dahili tema paleti. Host sayfanın verdiği --og-* değişkenleri daima
          kazanır; buradakiler yalnızca sıfır ayarla doğru görünmeyi sağlayan
          temaya duyarlı varsayılanlardır. */
-      /* Midnight Slate — yumuşak koyu lacivert, saf siyah yok. */
-      --_bg: #1e293b;
-      --_surface: #0f172a;
-      --_text: #f8fafc;
-      --_text-dim: #94a3b8;
-      --_border: #334155;
+      /* Octameet grileri — bileşen ana ürünün sağdaki "Uygulamalar" paneline
+         gömüldüğü için koyu tema o panelle aynı nötr ailede durur. Yüzeyler
+         zeminden koyulaşarak değil, açılarak ayrışır. */
+      --_bg: #404040;          /* kart — Octameet panel zemini */
+      --_surface: #515151;     /* oyun alanı, karttan bir ton açık */
+      --_text: #ffffff;
+      --_text-dim: #dedede;
+      --_border: #5c5c5c;
       --_shadow: 0 20px 25px -5px rgba(0,0,0,.4), 0 8px 10px -6px rgba(0,0,0,.3);
-      --_line: rgba(255,255,255,.12);
-      --_fill: rgba(255,255,255,.07);
-      --_fill-soft: rgba(255,255,255,.035);
-      --_fill-strong: rgba(255,255,255,.11);
-      --_gallows: #64748b;
+      --_line: #5c5c5c;
+      --_fill: #5c5c5c;        /* düğme, çip, ikincil yüzeyler */
+      --_fill-soft: #515151;
+      --_track: #363636;   /* cukur yuzey: ilerleme cubugu izi.
+                              Vurgu dolgusu #5c5c5c iz uzerinde 2.2:1'e
+                              dusuyordu; koyu iz onu 3.9:1'e cikarir. */
+      --_fill-strong: #6b6b6b; /* hover/aktif — düz palette durumun görünür
+                                  kalması için --_fill'in bir ton üstü */
+      --_gallows: #d0d0d0;
 
       /* Vurgu renkleri iki temada da ortak (Octapull turuncusu + safir). */
       --_primary: #3b82f6;
-      --_accent: #ff5b00;
-      --_ok: #22c55e;
-      --_bad: #ef4444;
+      --_accent: #ff5f00;   /* Octameet turuncusu */
+      /* Koyu temada gri zemin üzerinde okunacak kadar açık tonlar;
+         açık tema kendi bloğunda eski doygun değerlerde kalır. */
+      --_ok: #86efac;
+      --_bad: #ffc9c9;
 
       display: block;
       position: relative;
@@ -191,7 +201,10 @@ export class OctahangGame extends Localized(LitElement) {
       --_fill: rgba(15,23,42,.05);
       --_fill-soft: rgba(15,23,42,.03);
       --_fill-strong: rgba(15,23,42,.08);
+      --_track: rgba(15,23,42,.05);
       --_gallows: #94a3b8;
+      --_ok: #22c55e;
+      --_bad: #ef4444;
     }
 
     /* ── HUD ── */
@@ -245,14 +258,14 @@ export class OctahangGame extends Localized(LitElement) {
     .progress-track {
       height: 8px;
       border-radius: 999px;
-      background: var(--_fill);
+      background: var(--_track, var(--_fill));
       overflow: hidden;
       margin-bottom: .85rem;
     }
     .progress-fill {
       height: 100%;
       border-radius: inherit;
-      background: linear-gradient(90deg, var(--og-accent, var(--_accent)), var(--og-primary, var(--_primary)));
+      background: var(--og-accent, var(--_accent));
       transition: width .25s ease;
     }
 
@@ -449,9 +462,11 @@ export class OctahangGame extends Localized(LitElement) {
       justify-content: center;
       padding: 1.25rem;
       border-radius: inherit;
-      background: rgba(4, 10, 20, .55);
+      background: rgba(26, 26, 26, .55);
       backdrop-filter: blur(3px);
-      z-index: 5;
+      /* Kart içindeki her şeyin üstünde: açık kalmış ayar menüsü (z-index 60)
+         tur biterken sonuç penceresinin önüne geçmemeli. */
+      z-index: 999;
       animation: fadeIn .25s ease;
     }
     :host([theme='light']) .modal-backdrop { background: rgba(15, 23, 42, .35); }
@@ -473,6 +488,9 @@ export class OctahangGame extends Localized(LitElement) {
       text-align: center;
       animation: popIn .3s cubic-bezier(.34,1.56,.64,1) both;
     }
+    /* Diyalog kabı yalnızca odağı tutmak için odaklanabilir (tabindex="-1");
+       kendisi bir denetim olmadığı için halka çizilmez. */
+    .result:focus { outline: none; }
     .result h2 { margin: 0; font-size: 1.35rem; font-weight: 800; }
     .result .emoji { font-size: 2.4rem; line-height: 1; }
     .result .answer { font-size: .9rem; color: var(--_text-dim); }
@@ -491,7 +509,7 @@ export class OctahangGame extends Localized(LitElement) {
       min-width: 84px;
       padding: .6rem .8rem;
       border-radius: 14px;
-      background: linear-gradient(160deg, var(--_fill-strong), var(--_fill-soft));
+      background: var(--_fill);
       border: 1px solid var(--_line);
     }
     .stat-card.is-best {
@@ -504,10 +522,7 @@ export class OctahangGame extends Localized(LitElement) {
       font-weight: 800;
       line-height: 1.1;
       font-variant-numeric: tabular-nums;
-      background: linear-gradient(135deg, var(--og-accent, var(--_accent)), var(--og-primary, var(--_primary)));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+      color: var(--og-text, var(--_text));
     }
     .stat-label {
       font-size: .62rem;
@@ -535,7 +550,9 @@ export class OctahangGame extends Localized(LitElement) {
     }
     .overlay h2 { margin: 0; font-size: 1.5rem; font-weight: 800; }
     .overlay p { margin: 0; color: var(--_text-dim); font-size: .9rem; max-width: 34ch; line-height: 1.5; }
-    .overlay-top { display: flex; justify-content: center; align-items: center; gap: .4rem; flex-wrap: wrap; }
+    /* Ayar düğmesi açılış ekranında da HUD'daki yerinde durur: oyuncu tek bir
+       köşeyi öğrenir, ekran değişince aramak zorunda kalmaz. */
+    .overlay-top { display: flex; justify-content: flex-end; align-items: center; }
 
     /* Açılış amblemi: oyunun kendi çizim dilinden küçültülmüş bir darağacı ve
        ipte sallanan çöp adam. Emoji yerine kendi SVG'miz olduğu için tema
@@ -637,6 +654,7 @@ export class OctahangGame extends Localized(LitElement) {
   private _shakeTimeout = 0;
   private _finishTimer = 0;
   private _ctx: AudioContext | null = null;
+  private _settings = new SettingsMenuController(this);
 
   private get _word(): string {
     return this._entry.word;
@@ -725,11 +743,17 @@ export class OctahangGame extends Localized(LitElement) {
   }
 
   updated() {
-    // Tur bitince basılan harf düğmesi DOM'dan kalkar; klavyeyle oynayanın
-    // odağı boşlukta kalmasın diye sonuç panelinin düğmesine taşınır.
+    // Tur bitince basılan harf düğmesi DOM'dan kalkar; odağı boşlukta
+    // bırakmamak için sonuç paneline taşınır.
+    //
+    // Odak düğmeye değil, diyaloğun kendisine verilir: tarayıcı programatik
+    // odakta da `:focus-visible` sayabildiği için düğme, fareyle oynayanda bile
+    // turuncu bir halkayla çevriliyordu. Diyalog kabına odaklanmak hem
+    // role="dialog" için doğru açılış davranışıdır hem de halkayı yalnızca
+    // gerçekten Tab'layan oyuncuya bırakır.
     if (this._focusResult) {
       this._focusResult = false;
-      this.renderRoot?.querySelector<HTMLButtonElement>('.result button')?.focus();
+      this.renderRoot?.querySelector<HTMLElement>('.result')?.focus();
     }
   }
 
@@ -983,19 +1007,19 @@ export class OctahangGame extends Localized(LitElement) {
   }
 
   // ─── Render ──────────────────────────────────────────────────────────────
-  private _renderThemeToggle() {
-    const isLight = this.theme === 'light';
-    return html`
-      <button
-        class="theme-toggle"
-        part="theme-toggle"
-        type="button"
-        @click=${this._toggleTheme}
-        aria-pressed=${isLight.toString()}
-        aria-label=${this.t(isLight ? 'common.switchToDark' : 'common.switchToLight')}
-        title=${this.t(isLight ? 'common.themeDarkTitle' : 'common.themeLightTitle')}
-      >${isLight ? '☀️' : '🌙'} ${this.t(isLight ? 'common.themeLight' : 'common.themeDark')}</button>
-    `;
+  /**
+   * Dil, tema ve host sayfanın kendi düğmeleri (mod, ses) üst barda yan yana
+   * durmak yerine sağ üstteki üç nokta düğmesinin altında toplanır. Açılış
+   * ekranı ile HUD aynı bileşeni kullanır.
+   */
+  private _renderSettings() {
+    return renderSettingsMenu({
+      locale: this.locale,
+      open: this._settings.open,
+      onTrigger: this._settings.toggle,
+      theme: this.theme,
+      onThemeToggle: () => this._toggleTheme(),
+    });
   }
 
   private _renderHUD() {
@@ -1008,11 +1032,6 @@ export class OctahangGame extends Localized(LitElement) {
     return html`
       <div class="hud" part="hud">
         <div class="hud-group">
-          ${renderLanguagePicker(this.locale)}
-          ${this._renderThemeToggle()}
-          <slot name="host-controls"></slot>
-        </div>
-        <div class="hud-group">
           <span class="chip">${levelText} · ${m}:${s}</span>
           <span
             class="chip lives ${this._lives <= 2 ? 'low' : ''}"
@@ -1021,6 +1040,7 @@ export class OctahangGame extends Localized(LitElement) {
             ❤️ ${this._lives}/${MAX_MISTAKES}
           </span>
         </div>
+        <div class="hud-group">${this._renderSettings()}</div>
       </div>
     `;
   }
@@ -1183,6 +1203,7 @@ export class OctahangGame extends Localized(LitElement) {
           role="dialog"
           aria-modal="true"
           aria-label=${this.t('octahang.resultAria')}
+          tabindex="-1"
         >
           <div class="emoji">${isGameComplete ? '🏆' : won ? '🎉' : '💀'}</div>
           <h2>${this.t(isGameComplete ? 'octahang.allDone' : won ? 'octahang.won' : 'octahang.lost')}</h2>
@@ -1251,11 +1272,7 @@ export class OctahangGame extends Localized(LitElement) {
 
   private _renderIdle() {
     return html`
-      <div class="overlay-top">
-        ${renderLanguagePicker(this.locale)}
-        ${this._renderThemeToggle()}
-        <slot name="host-controls"></slot>
-      </div>
+      <div class="overlay-top">${this._renderSettings()}</div>
       <div class="overlay">
         ${this._renderIdleFigure()}
         <h2>${this.t('octahang.title')}</h2>

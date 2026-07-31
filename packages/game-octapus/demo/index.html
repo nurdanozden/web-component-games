@@ -17,18 +17,21 @@
       --page-bg: #b0b8bdc5;
       --page-fg: #64748b;
       --page-muted: rgba(22, 32, 46, .65);
-      --page-title: #c25e00;
+      --page-title: #ff5f00;
       --panel-line: rgba(22, 32, 46, .14);
       --panel-fill: rgba(22, 32, 46, .04);
       --game-shadow: 0 20px 45px rgba(20, 30, 50, .12), 0 0 0 1px rgba(22, 32, 46, .08);
     }
     body.theme-dark {
-      --page-bg: #0f172a;
-      --page-fg: #94a3b8;
-      --page-muted: rgba(234, 242, 255, .65);
-      --page-title: #ff9900;
-      --panel-line: rgba(255, 255, 255, .15);
-      --panel-fill: rgba(255, 255, 255, .05);
+      /* Octameet grileri. Sayfa zemini karttan (#404040) bir ton acik durur,
+         boylece oyun kutusu zeminin uzerinde ayrisir. */
+      --page-bg: #5c5c5c;
+      /* Eski #94a3b8 bu zeminde 2.6:1'e dusuyordu; beyaz 6.7:1 veriyor. */
+      --page-fg: #ffffff;
+      --page-muted: rgba(255, 255, 255, .8);
+      --page-title: #ff5f00;
+      --panel-line: rgba(255, 255, 255, .28);
+      --panel-fill: rgba(255, 255, 255, .10);
       --game-shadow: 0 20px 45px rgba(0, 0, 0, .35), 0 0 0 1px rgba(255, 255, 255, .08);
     }
 
@@ -67,19 +70,24 @@
       --og-radius: 16px;
 
       width: 100%;
-      max-width: 640px;
+      max-width: 600px;
       box-shadow: var(--game-shadow);
       transition: box-shadow .2s ease;
     }
 
-    /* #controls is projected into the game's own "host-controls" slot, right
-       next to its built-in theme toggle — on the idle/start screen and then
-       in the HUD once play begins. Compact icon-style buttons fit both. */
+    /* #controls is projected into the game's own "host-controls" slot, which
+       now lives inside the top-right settings (kebab) menu — on the idle/start
+       screen and in the HUD alike. The menu is a vertical list, so the buttons
+       stack and fill its width instead of sitting side by side. */
     #controls {
       display: flex;
+      flex-direction: column;
       gap: .35rem;
+      width: 100%;
     }
     #controls button {
+      width: 100%;
+      text-align: start;
       cursor: pointer;
       border: 1px solid var(--panel-line);
       background: var(--panel-fill);
@@ -95,8 +103,8 @@
       background: rgba(0,102,204,.18);
     }
     #toggle-mode.is-random {
-      border-color: rgba(255,153,0,.6);
-      background: rgba(255,153,0,.18);
+      border-color: rgba(255,95,0,.6);
+      background: rgba(255,95,0,.18);
     }
     #toggle-mute.is-muted {
       border-color: var(--panel-line);
@@ -111,7 +119,7 @@
 
     #event-log {
       width: 100%;
-      max-width: 640px;
+      max-width: 600px;
       background: var(--panel-fill);
       border: 1px solid var(--panel-line);
       border-radius: 12px;
@@ -127,7 +135,7 @@
 
     #mode-hint {
       width: 100%;
-      max-width: 640px;
+      max-width: 600px;
       margin: -0.5rem 0 0;
       font-size: .9rem;
       color: var(--page-muted);
@@ -208,9 +216,9 @@
     game.addEventListener('og-level-start', () => { modeHint.style.display = 'none'; }, { once: true });
 
     // #controls is projected into the game's own "host-controls" slot from the
-    // start, right next to the built-in theme toggle — on the idle/start
-    // screen first, then inside the HUD once play begins (same slot, so it
-    // stays put across the transition).
+    // start — that slot sits inside the settings (kebab) menu, on the idle
+    // screen first and then in the HUD once play begins (same slot, so the
+    // buttons stay put across the transition).
     const controls = document.getElementById('controls');
     controls.setAttribute('slot', 'host-controls');
     game.appendChild(controls);

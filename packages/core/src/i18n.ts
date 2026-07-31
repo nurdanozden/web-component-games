@@ -80,8 +80,14 @@ export interface Messages {
   // ── Ortak ────────────────────────────────────────────────────────────────
   'common.language': string;
   'common.languageAria': string;
+  'common.settings': string;
+  'common.settingsOpen': string;
+  'common.settingsClose': string;
+  'common.theme': string;
   'common.themeLight': string;
   'common.themeDark': string;
+  'common.themeLightShort': string;
+  'common.themeDarkShort': string;
   'common.switchToDark': string;
   'common.switchToLight': string;
   'common.themeDarkTitle': string;
@@ -223,8 +229,14 @@ export const translations: Record<Locale, Messages> = {
   tr: {
     'common.language': 'Dil',
     'common.languageAria': 'Oyun dilini seç',
+    'common.settings': 'Ayarlar',
+    'common.settingsOpen': 'Ayarlar menüsünü aç',
+    'common.settingsClose': 'Ayarlar menüsünü kapat',
+    'common.theme': 'Tema',
     'common.themeLight': 'Tema: Açık',
     'common.themeDark': 'Tema: Koyu',
+    'common.themeLightShort': 'Açık',
+    'common.themeDarkShort': 'Koyu',
     'common.switchToDark': 'Koyu temaya geç',
     'common.switchToLight': 'Açık temaya geç',
     'common.themeDarkTitle': 'Koyu tema',
@@ -364,8 +376,14 @@ export const translations: Record<Locale, Messages> = {
   en: {
     'common.language': 'Language',
     'common.languageAria': 'Choose game language',
+    'common.settings': 'Settings',
+    'common.settingsOpen': 'Open the settings menu',
+    'common.settingsClose': 'Close the settings menu',
+    'common.theme': 'Theme',
     'common.themeLight': 'Theme: Light',
     'common.themeDark': 'Theme: Dark',
+    'common.themeLightShort': 'Light',
+    'common.themeDarkShort': 'Dark',
     'common.switchToDark': 'Switch to dark theme',
     'common.switchToLight': 'Switch to light theme',
     'common.themeDarkTitle': 'Dark theme',
@@ -505,8 +523,14 @@ export const translations: Record<Locale, Messages> = {
   it: {
     'common.language': 'Lingua',
     'common.languageAria': 'Scegli la lingua del gioco',
+    'common.settings': 'Impostazioni',
+    'common.settingsOpen': 'Apri il menu delle impostazioni',
+    'common.settingsClose': 'Chiudi il menu delle impostazioni',
+    'common.theme': 'Tema',
     'common.themeLight': 'Tema: Chiaro',
     'common.themeDark': 'Tema: Scuro',
+    'common.themeLightShort': 'Chiaro',
+    'common.themeDarkShort': 'Scuro',
     'common.switchToDark': 'Passa al tema scuro',
     'common.switchToLight': 'Passa al tema chiaro',
     'common.themeDarkTitle': 'Tema scuro',
@@ -646,8 +670,14 @@ export const translations: Record<Locale, Messages> = {
   es: {
     'common.language': 'Idioma',
     'common.languageAria': 'Elige el idioma del juego',
+    'common.settings': 'Ajustes',
+    'common.settingsOpen': 'Abrir el menú de ajustes',
+    'common.settingsClose': 'Cerrar el menú de ajustes',
+    'common.theme': 'Tema',
     'common.themeLight': 'Tema: Claro',
     'common.themeDark': 'Tema: Oscuro',
+    'common.themeLightShort': 'Claro',
+    'common.themeDarkShort': 'Oscuro',
     'common.switchToDark': 'Cambiar al tema oscuro',
     'common.switchToLight': 'Cambiar al tema claro',
     'common.themeDarkTitle': 'Tema oscuro',
@@ -787,8 +817,14 @@ export const translations: Record<Locale, Messages> = {
   ar: {
     'common.language': 'اللغة',
     'common.languageAria': 'اختر لغة اللعبة',
+    'common.settings': 'الإعدادات',
+    'common.settingsOpen': 'افتح قائمة الإعدادات',
+    'common.settingsClose': 'أغلق قائمة الإعدادات',
+    'common.theme': 'السمة',
     'common.themeLight': 'السمة: فاتحة',
     'common.themeDark': 'السمة: داكنة',
+    'common.themeLightShort': 'فاتحة',
+    'common.themeDarkShort': 'داكنة',
     'common.switchToDark': 'التبديل إلى السمة الداكنة',
     'common.switchToLight': 'التبديل إلى السمة الفاتحة',
     'common.themeDarkTitle': 'سمة داكنة',
@@ -1170,15 +1206,15 @@ export const i18nStyles = css`
   .lang-picker select:hover { background: color-mix(in srgb, currentColor 18%, transparent); }
   .lang-picker select:active { transform: scale(.95); }
   .lang-picker select:focus-visible {
-    outline: 3px solid var(--og-accent, #ff9900);
+    outline: 3px solid var(--og-accent, #ff5f00);
     outline-offset: 2px;
   }
   /* Yerel <option> listesi gölge DOM'da değil, tarayıcının kendi katmanında
      çizilir; oradaki renkleri sayfa teması değil işletim sistemi belirler, bu
      yüzden okunaklı kalsın diye açıkça verilir. */
   .lang-picker option {
-    background: #1e293b;
-    color: #f8fafc;
+    background: #515151;
+    color: #ffffff;
   }
   :host([theme='light']) .lang-picker option {
     background: #ffffff;

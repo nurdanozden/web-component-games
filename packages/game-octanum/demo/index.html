@@ -15,14 +15,22 @@
     :root {
       --page-bg: #b0b8bdc5;
       --page-fg: #64748b;
+      /* octapus demosuyla ayni: baslik Octameet turuncusu, ipucu yumusak koyu. */
+      --page-muted: rgba(22, 32, 46, .65);
+      --page-title: #ff5f00;
       --panel-line: #94a3b8;
       --panel-fill: rgba(100, 116, 139, .1);
     }
     body.theme-dark {
-      --page-bg: #0f172a;
-      --page-fg: #94a3b8;
-      --panel-line: #334155;
-      --panel-fill: rgba(148, 163, 184, .08);
+      /* Octameet grileri. Sayfa zemini karttan (#404040) bir ton acik durur,
+         boylece oyun kutusu zeminin uzerinde ayrisir. */
+      --page-bg: #5c5c5c;
+      /* Eski #94a3b8 bu zeminde 2.6:1'e dusuyordu; beyaz 6.7:1 veriyor. */
+      --page-fg: #ffffff;
+      --page-muted: rgba(255, 255, 255, .8);
+      --page-title: #ff5f00;
+      --panel-line: #6b6b6b;
+      --panel-fill: rgba(255, 255, 255, .10);
     }
 
     body {
@@ -48,7 +56,8 @@
       font-weight: 700;
       letter-spacing: .12em;
       text-transform: uppercase;
-      opacity: .65;
+      color: var(--page-title);
+      opacity: .85;
     }
 
     /* Stand-in for the platform modal the game will really live inside:
@@ -68,11 +77,14 @@
       width: 100%;
     }
 
-    /* #controls is projected into the game's own "host-controls" slot, right
-       next to its built-in theme toggle — on the idle/start screen and then in
-       the HUD once play begins. Compact pill buttons fit both. */
-    #controls { display: flex; gap: .35rem; }
+    /* #controls is projected into the game's own "host-controls" slot, which
+       now lives inside the top-right settings (kebab) menu — on the idle/start
+       screen and in the HUD alike. The menu is a vertical list, so the buttons
+       stack and fill its width instead of sitting side by side. */
+    #controls { display: flex; flex-direction: column; gap: .35rem; width: 100%; }
     #controls button {
+      width: 100%;
+      text-align: start;
       cursor: pointer;
       border: 1px solid var(--panel-line);
       background: var(--panel-fill);
@@ -91,7 +103,7 @@
       max-width: 600px; /* oyun kutusuyla aynı hizada dursun */
       margin: -0.25rem 0 0;
       font-size: .9rem;
-      opacity: .75;
+      color: var(--page-muted);
       text-align: center;
       line-height: 1.5;
     }
@@ -149,8 +161,9 @@
     }
 
     // #controls is projected into the game's own "host-controls" slot from the
-    // start: next to the built-in theme toggle on the idle screen first, then
-    // inside the HUD once play begins (same slot, so it stays put).
+    // start — that slot sits inside the settings (kebab) menu, on the idle
+    // screen first and then in the HUD once play begins (same slot, so the
+    // buttons stay put across the transition).
     const controls = document.getElementById('controls');
     controls.setAttribute('slot', 'host-controls');
     game.appendChild(controls);

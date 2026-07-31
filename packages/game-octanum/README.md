@@ -111,9 +111,12 @@ katsayıya bağlanır (`difficultyFor`) ve dört kolu birden çevirir:
 
 | Zorluk | Gereken karışım | Hedef aralığı | Süre | Nadir öz havuzu |
 |---|---|---|---|---|
-| 0 · ilk seviye | 2 | 24 – 99 | 150 sn | `15, 20, 25` |
-| 0.5 · orta | 3 | 142 – 499 | 120 sn | `15, 20, 25, 50` |
+| 0 · ilk seviye | 2 | 24 – 99 | 90 sn | `15, 20, 25` |
+| 0.5 · orta | 3 | 142 – 499 | 90 sn | `15, 20, 25, 50` |
 | 1 · son seviye | 5 | 260 – 899 | 90 sn | `15, 20, 25, 50, 75, 100` |
+
+Süre bilerek sabittir: her turda 90 saniye. Zorluk, süre baskısıyla değil
+formülün uzunluğu, hedefin büyüklüğü ve nadir öz havuzuyla ölçülür.
 
 **Asıl kol, hedefin büyüklüğü değil formülün uzunluğudur** (`stepsFor`): tur,
 hedefe kaç karışımda varılacağı baştan belirlenerek örülür. Ölçek katsayısı 2.5
@@ -198,7 +201,8 @@ normal turlarda hiç devreye girmediğini gösterir.
   tam isabetle bitince `og-game-complete` yayınlanır.
 - **random:** Her tur bağımsızdır, seviye sonu yoktur; zorluk eğrisi olmadığı
   için **orta bantta sabittir** (`RANDOM_MODE_DIFFICULTY = 0.5`): her tur üç
-  karışımlık, hedef `142 – 499` arası, süre sabit **120 saniye**.
+  karışımlık, hedef `142 – 499` arası, süre **90 saniye** (diğer bütün
+  turlarla aynı).
   `bestTimes`/`bestScores` sözleşmeye uygun olarak tek anahtar (`0`) üzerinden
   tutulur; `currentLevel` kalıcı state'te daima `1`'dir.
 
@@ -256,10 +260,7 @@ Dışa açılan `part`'lar: `hud`, `theme-toggle`, `target`, `board`, `card`, `o
 ```
 
 > Not: Bu bileşen, girdi property'sini kök README sözleşmesindeki (§3.1) adla,
-> yani `state` olarak açar (game-octapus, game-octafort ve game-octahang ile
-> aynı). Depodaki bazı eski oyunlar (`game-ornek`, `game-hafiza`) bunu
-> `gameState` olarak adlandırır; host entegrasyonunda paketin kullandığı ada
-> dikkat edin.
+> yani `state` olarak açar; depodaki bütün oyunlar aynı adı kullanır.
 
 ## Sözleşme Uyumu
 - Çalışma zamanı bağımlılığı yalnızca Lit'tir; ağ erişimi ve yerel depolama
@@ -275,7 +276,14 @@ Dışa açılan `part`'lar: `hud`, `theme-toggle`, `target`, `board`, `card`, `o
   şişe ve panel animasyonları kapanır, sonuç paneli beklemeden açılır.
 
 ## Kullanılan Üçüncü Taraf Varlıklar
-Yok. Kazan, imbik ve şişe çizimleri projeye özgü olarak yazılmış SVG/CSS
+Bileşenin kendisinde yok. Kazan, imbik ve şişe çizimleri projeye özgü olarak yazılmış SVG/CSS
 biçimleridir. Kullanılan simgeler (⚗️, ⏳, 🎯, 📏, ⭐, 🌟, 🏆, 💨) Unicode
 karakterlerdir. Ses efektleri Web Audio API osilatörleriyle programatik
 üretilir, harici ses dosyası kullanılmaz.
+
+**Yazı tipi (yalnızca demo sayfası):** `demo/index.html`, gösterim amacıyla
+[Inter](https://fonts.google.com/specimen/Inter) yazı tipini Google Fonts
+üzerinden yükler; lisansı **SIL Open Font License 1.1**'dir (ticari kullanım
+dahil serbest, atıf zorunluluğu yoktur). Yazı tipi pakete dâhil edilmez ve
+bileşenin çalışması için gerekli değildir: bileşen `--og-font` değişkenini okur,
+host sayfa hangi yazı tipini verirse onu kullanır.

@@ -77,14 +77,20 @@ function shuffle<T>(rand: () => number, list: readonly T[]): T[] {
 }
 
 /**
- * Zorluğa göre süre: ilk seviyede iki buçuk dakika, son seviyede bir buçuk
- * dakika. Serbest mod orta banttan (120 sn) oynanır.
+ * Tur süresi: her zorlukta sabit 90 saniye.
+ *
+ * Eskiden süre de bir zorluk koluydu (ilk seviyede 150 sn, son seviyede 90 sn).
+ * Artık değil: zorluk yalnızca formülün uzunluğu, hedefin büyüklüğü ve nadir öz
+ * havuzu üzerinden ölçülür — süre baskısı her turda aynıdır. `difficulty`
+ * parametresi imzada kalır, çünkü çağrı yerleri (`generateRound`, seviye kurma)
+ * zorluğu zaten hesaplıyor ve süre ileride yeniden eğriye bağlanmak istenirse
+ * imza değişmeden dönülebilsin.
  */
-export function timeLimitFor(difficulty: number): number {
-  return Math.round(150_000 - 60_000 * clamp01(difficulty));
+export function timeLimitFor(_difficulty: number): number {
+  return 90_000;
 }
 
-/** Serbest modun sabit süresi (ms) — orta zorluğun süresiyle aynıdır. */
+/** Serbest modun süresi (ms) — süre artık her zorlukta aynı olduğu için 90 sn. */
 export const FREE_MODE_TIME_MS = timeLimitFor(RANDOM_MODE_DIFFICULTY);
 
 /**

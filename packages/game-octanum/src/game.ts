@@ -5,8 +5,10 @@ import {
   GameState,
   LevelResult,
   Localized,
+  SettingsMenuController,
   i18nStyles,
-  renderLanguagePicker,
+  renderSettingsMenu,
+  settingsMenuStyles,
   type MessageKey,
 } from '@octapull-games/core';
 import {
@@ -133,34 +135,41 @@ function formatClock(ms: number): string {
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export class OctanumGame extends Localized(LitElement) {
-  static styles = [i18nStyles, css`
+  static styles = [i18nStyles, settingsMenuStyles, css`
     *, *::before, *::after { box-sizing: border-box; }
 
     :host {
       /* Dahili tema paleti. Host sayfanın verdiği --og-* değişkenleri daima
          kazanır; buradakiler yalnızca sıfır ayarla doğru görünmeyi sağlayan
          temaya duyarlı varsayılanlardır. */
-      /* Midnight Slate — diğer oyunlarla ortak koyu lacivert zemin; simyanın
-         kimliği nötrlerde değil, vurgu renklerinde taşınır. */
-      --_bg: #1e293b;
-      --_surface: #0f172a;
-      --_text: #f8fafc;
-      --_text-dim: #94a3b8;
-      --_border: #334155;
+      /* Octameet grileri — bileşen ana ürünün sağdaki "Uygulamalar" paneline
+         gömüldüğü için koyu tema o panelle aynı nötr ailede durur. Yüzeyler
+         zeminden koyulaşarak değil, açılarak ayrışır. */
+      --_bg: #404040;          /* kart — Octameet panel zemini */
+      --_surface: #515151;     /* oyun alanı, karttan bir ton açık */
+      --_text: #ffffff;
+      --_text-dim: #dedede;
+      --_border: #5c5c5c;
       --_shadow: 0 20px 25px -5px rgba(0,0,0,.4), 0 8px 10px -6px rgba(0,0,0,.3);
-      --_line: rgba(255,255,255,.12);
-      --_fill: rgba(255,255,255,.07);
-      --_fill-soft: rgba(255,255,255,.035);
-      --_fill-strong: rgba(255,255,255,.11);
-      --_glass: rgba(196,186,255,.10);
-      --_metal: #6b7fa8;
+      --_line: #5c5c5c;
+      --_fill: #5c5c5c;        /* düğme, çip, ikincil yüzeyler */
+      --_fill-soft: #515151;
+      --_track: #363636;   /* cukur yuzey: ilerleme cubugu izi.
+                              Vurgu dolgusu #5c5c5c iz uzerinde 2.2:1'e
+                              dusuyordu; koyu iz onu 3.9:1'e cikarir. */
+      --_fill-strong: #6b6b6b; /* hover/aktif — düz palette durumun görünür
+                                  kalması için --_fill'in bir ton üstü */
+      --_glass: rgba(255,255,255,.10);
+      --_metal: #d0d0d0;
 
       /* Vurgu renkleri iki temada da ortak kalır (simya altını + eflatun). */
-      --_primary: #8b5cf6;
-      --_accent: #f0b429;
+      --_primary: #3b82f6;   /* octafort/octahang ile ayni mavi */
+      --_accent: #ff5f00;   /* Octameet turuncusu (eski simya altini) */
       --_potion: #4ade80;
-      --_ok: #22c55e;
-      --_bad: #ef4444;
+      /* Koyu temada gri zemin üzerinde okunacak kadar açık tonlar;
+         açık tema kendi bloğunda eski doygun değerlerde kalır. */
+      --_ok: #86efac;
+      --_bad: #ffc9c9;
 
       display: block;
       position: relative;
@@ -181,21 +190,31 @@ export class OctanumGame extends Localized(LitElement) {
 
     /* Aged Parchment — eski bir formül defterinin sayfası. */
     :host([theme='light']) {
-      --_bg: #fdfaf3;
-      --_surface: #f3ecdc;
-      --_text: #2a2116;
-      --_text-dim: #7b6a52;
-      --_border: #e4d8bf;
-      --_shadow: 0 20px 25px -5px rgba(60,45,20,.10), 0 8px 10px -6px rgba(60,45,20,.06);
-      --_line: rgba(42,33,22,.14);
-      --_fill: rgba(42,33,22,.05);
-      --_fill-soft: rgba(42,33,22,.03);
-      --_fill-strong: rgba(42,33,22,.09);
+      /* Nötrler diğer üç oyunla birebir aynı gri ailesinden gelir; simyanın
+         kimliği zemin renginde değil, vurgu renklerinde (eflatun, turuncu,
+         iksir yeşili) taşınır. Eskiden burada krem/bej bir palet vardı ve
+         oyun, yan yana durduğu diğer oyunlardan ayrı düşüyordu. */
+      --_bg: #ffffff;
+      --_surface: #f1f5f9;
+      --_text: #0f172a;
+      --_text-dim: #64748b;
+      --_border: #e2e8f0;
+      --_shadow: 0 20px 25px -5px rgba(15,23,42,.08), 0 8px 10px -6px rgba(15,23,42,.04);
+      --_line: rgba(15,23,42,.12);
+      --_fill: rgba(15,23,42,.05);
+      --_fill-soft: rgba(15,23,42,.03);
+      --_fill-strong: rgba(15,23,42,.08);
+      --_track: rgba(15,23,42,.05);
       --_glass: rgba(124,58,237,.07);
-      --_metal: #8b7a5c;
-      --_primary: #7c3aed;
-      --_accent: #b45309;
+      /* İmbiğin metal parçaları da nötre çekildi: sıcak kahve (#8b7a5c) gri
+         zeminde tek başına sırıtıyordu. Ton, eskisiyle aynı görsel ağırlıkta
+         seçildi (kart üzerinde 3.95 — eskisi krem üzerinde 4.00). */
+      --_metal: #748196;
+      --_primary: #3b82f6;   /* iki temada da ayni mavi */
+      --_accent: #ff5f00;   /* Octameet turuncusu — iki temada da ayni */
       --_potion: #16a34a;
+      --_ok: #22c55e;
+      --_bad: #ef4444;
     }
 
     /* ── HUD ── */
@@ -250,14 +269,14 @@ export class OctanumGame extends Localized(LitElement) {
     .progress-track {
       height: 8px;
       border-radius: 999px;
-      background: var(--_fill);
+      background: var(--_track, var(--_fill));
       overflow: hidden;
       margin-bottom: .85rem;
     }
     .progress-fill {
       height: 100%;
       border-radius: inherit;
-      background: linear-gradient(90deg, var(--og-primary, var(--_primary)), var(--og-accent, var(--_accent)));
+      background: var(--og-accent, var(--_accent));
       transition: width .2s linear;
     }
     .progress-fill.low { background: var(--_bad); }
@@ -304,10 +323,9 @@ export class OctanumGame extends Localized(LitElement) {
       font-weight: 800;
       line-height: 1.05;
       font-variant-numeric: tabular-nums;
-      background: linear-gradient(135deg, var(--og-accent, var(--_accent)), var(--og-primary, var(--_primary)));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+      /* Vurgu turuncusu bu zeminde 2.6:1 veriyordu; odak sayi metin renginde
+         kalsin, turuncu etiket/kazan/dugmelerde surer. */
+      color: var(--og-text, var(--_text));
     }
     .target.hit .target-value { animation: flare .6s ease; }
     @keyframes flare {
@@ -377,9 +395,9 @@ export class OctanumGame extends Localized(LitElement) {
       position: absolute;
       inset: auto 0 0 0;
       height: var(--_fill-level, 50%);
-      background: linear-gradient(180deg,
-        color-mix(in srgb, var(--og-octanum-potion, var(--_potion)) 55%, transparent),
-        color-mix(in srgb, var(--og-octanum-potion, var(--_potion)) 22%, transparent));
+      /* Düz dolgu — degrade yok. Yarı saydam kalır, çünkü sıvı camın
+         arkasından görünür; ama tek renktir, geçiş içermez. */
+      background: color-mix(in srgb, var(--og-octanum-potion, var(--_potion)) 42%, transparent);
       border-radius: 0 0 17px 17px;
       transition: height .2s ease;
     }
@@ -531,12 +549,14 @@ export class OctanumGame extends Localized(LitElement) {
       justify-content: center;
       padding: 1.25rem;
       border-radius: inherit;
-      background: rgba(8, 5, 18, .58);
+      background: rgba(26, 26, 26, .58);
       backdrop-filter: blur(3px);
-      z-index: 5;
+      /* Kart içindeki her şeyin üstünde: açık kalmış ayar menüsü (z-index 60)
+         tur biterken sonuç penceresinin önüne geçmemeli. */
+      z-index: 999;
       animation: fadeIn .25s ease;
     }
-    :host([theme='light']) .modal-backdrop { background: rgba(60, 45, 20, .35); }
+    :host([theme='light']) .modal-backdrop { background: rgba(15, 23, 42, .35); }
 
     .result {
       display: flex;
@@ -575,7 +595,7 @@ export class OctanumGame extends Localized(LitElement) {
       min-width: 78px;
       padding: .55rem .7rem;
       border-radius: 14px;
-      background: linear-gradient(160deg, var(--_fill-strong), var(--_fill-soft));
+      background: var(--_fill);
       border: 1px solid var(--_line);
     }
     .stat-card.is-best {
@@ -588,10 +608,7 @@ export class OctanumGame extends Localized(LitElement) {
       font-weight: 800;
       line-height: 1.1;
       font-variant-numeric: tabular-nums;
-      background: linear-gradient(135deg, var(--og-accent, var(--_accent)), var(--og-primary, var(--_primary)));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+      color: var(--og-text, var(--_text));
     }
     .stat-label {
       font-size: .6rem;
@@ -629,7 +646,9 @@ export class OctanumGame extends Localized(LitElement) {
     }
     .overlay h2 { margin: 0; font-size: 1.5rem; font-weight: 800; }
     .overlay p { margin: 0; color: var(--_text-dim); font-size: .9rem; max-width: 34ch; line-height: 1.5; }
-    .overlay-top { display: flex; justify-content: center; align-items: center; gap: .4rem; flex-wrap: wrap; }
+    /* Ayar düğmesi açılış ekranında da HUD'daki yerinde durur: oyuncu tek bir
+       köşeyi öğrenir, ekran değişince aramak zorunda kalmaz. */
+    .overlay-top { display: flex; justify-content: flex-end; align-items: center; }
 
     /* Açılış amblemi: ateşte kaynayan, ağzından bileşen atılan bir imbik.
        Emoji yerine kendi SVG'miz olduğu için tema renklerini alır ve her
@@ -666,9 +685,8 @@ export class OctanumGame extends Localized(LitElement) {
 
     /* İksir: iki periyotluk dalga sürekli yana kayar, sıvı böylece durgun
        durmaz. Dalga imbik gövdesine kırpıldığı için camdan taşmaz. */
-    .still .brew { fill: url(#og-brew); }
-    .still .brew-a { stop-color: var(--og-octanum-potion, var(--_potion)); }
-    .still .brew-b { stop-color: color-mix(in srgb, var(--og-octanum-potion, var(--_potion)) 60%, #000); }
+    /* Düz dolgu — kazandaki .brew ile aynı ton; degrade tanımı kaldırıldı. */
+    .still .brew { fill: var(--og-octanum-potion, var(--_potion)); }
     .still .wave { animation: wave-slide 3.4s linear infinite; }
     @keyframes wave-slide { to { transform: translateX(-40px); } }
 
@@ -824,6 +842,7 @@ export class OctanumGame extends Localized(LitElement) {
   private _finishTimer = 0;
   private _flashTimeout = 0;
   private _ctx: AudioContext | null = null;
+  private _settings = new SettingsMenuController(this);
 
   private get _levelKey(): number {
     return this.mode === 'random' ? 0 : this._currentLevel;
@@ -1283,19 +1302,19 @@ export class OctanumGame extends Localized(LitElement) {
   }
 
   // ─── Render ──────────────────────────────────────────────────────────────
-  private _renderThemeToggle() {
-    const isLight = this.theme === 'light';
-    return html`
-      <button
-        class="theme-toggle"
-        part="theme-toggle"
-        type="button"
-        @click=${this._toggleTheme}
-        aria-pressed=${isLight.toString()}
-        aria-label=${this.t(isLight ? 'common.switchToDark' : 'common.switchToLight')}
-        title=${this.t(isLight ? 'common.themeDarkTitle' : 'common.themeLightTitle')}
-      >${isLight ? '☀️' : '🌙'} ${this.t(isLight ? 'common.themeLight' : 'common.themeDark')}</button>
-    `;
+  /**
+   * Dil, tema ve host sayfanın kendi düğmeleri (mod, ses) üst barda yan yana
+   * durmak yerine sağ üstteki üç nokta düğmesinin altında toplanır. Açılış
+   * ekranı ile HUD aynı bileşeni kullanır.
+   */
+  private _renderSettings() {
+    return renderSettingsMenu({
+      locale: this.locale,
+      open: this._settings.open,
+      onTrigger: this._settings.toggle,
+      theme: this.theme,
+      onThemeToggle: () => this._toggleTheme(),
+    });
   }
 
   private _renderHUD() {
@@ -1306,16 +1325,12 @@ export class OctanumGame extends Localized(LitElement) {
     return html`
       <div class="hud" part="hud">
         <div class="hud-group">
-          ${renderLanguagePicker(this.locale)}
-          ${this._renderThemeToggle()}
-          <slot name="host-controls"></slot>
-        </div>
-        <div class="hud-group">
           <span class="chip">${levelText}</span>
           <span class="chip clock ${low ? 'low' : ''}" aria-label=${this.t('octanum.timeLabel')}>
             ⏳ ${formatClock(this._remainingMs)}
           </span>
         </div>
+        <div class="hud-group">${this._renderSettings()}</div>
       </div>
     `;
   }
@@ -1586,10 +1601,6 @@ export class OctanumGame extends Localized(LitElement) {
           <clipPath id="og-flask">
             <path d="M45,24 V56 L26,104 H84 L65,56 V24 Z" />
           </clipPath>
-          <linearGradient id="og-brew" x1="0" y1="0" x2="0" y2="1">
-            <stop class="brew-a" offset="0" />
-            <stop class="brew-b" offset="1" />
-          </linearGradient>
         </defs>
 
         <ellipse class="halo" cx="55" cy="86" rx="30" ry="22" />
@@ -1629,11 +1640,7 @@ export class OctanumGame extends Localized(LitElement) {
 
   private _renderIdle() {
     return html`
-      <div class="overlay-top">
-        ${renderLanguagePicker(this.locale)}
-        ${this._renderThemeToggle()}
-        <slot name="host-controls"></slot>
-      </div>
+      <div class="overlay-top">${this._renderSettings()}</div>
       <div class="overlay">
         ${this._renderStill()}
         <h2>${this.t('octanum.title')}</h2>

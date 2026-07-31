@@ -36,7 +36,7 @@ describe('og-octapus event contract', () => {
 
     const handler = vi.fn();
     el.addEventListener('og-level-start', handler);
-    const startButton = el.shadowRoot!.querySelector('button') as HTMLButtonElement;
+    const startButton = el.shadowRoot!.querySelector('button.btn-primary') as HTMLButtonElement;
     startButton.click();
 
     expect(handler).toHaveBeenCalledTimes(1);
@@ -52,7 +52,7 @@ describe('og-octapus event contract', () => {
       el = createGame();
       document.body.appendChild(el);
       await el.updateComplete;
-      (el.shadowRoot!.querySelector('button') as HTMLButtonElement).click();
+      (el.shadowRoot!.querySelector('button.btn-primary') as HTMLButtonElement).click();
 
       const order: string[] = [];
       el.addEventListener('og-level-complete', (e) => order.push((e as CustomEvent).type));
@@ -73,5 +73,92 @@ describe('og-octapus event contract', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe('og-octapus settings menu', () => {
+  let el: OctapusGame;
+
+  afterEach(() => {
+    el?.remove();
+  });
+
+  const trigger = () => el.shadowRoot!.querySelector<HTMLButtonElement>('.settings-trigger')!;
+  const isOpen = () => el.shadowRoot!.querySelector('.settings')!.classList.contains('is-open');
+
+  async function mount(): Promise<void> {
+    el = createGame();
+    document.body.appendChild(el);
+    await el.updateComplete;
+  }
+
+  it('keeps language, theme and the host-controls slot inside the menu, not on the bar', async () => {
+    await mount();
+    const panel = el.shadowRoot!.querySelector('.settings-panel')!;
+
+    expect(panel.querySelector('.lang-picker select')).not.toBeNull();
+    expect(panel.querySelector('button.theme-toggle')).not.toBeNull();
+    expect(panel.querySelector('slot[name="host-controls"]')).not.toBeNull();
+    // Nothing may sit outside the panel — that is the whole point of the move.
+    expect(el.shadowRoot!.querySelectorAll('.lang-picker')).toHaveLength(1);
+    expect(el.shadowRoot!.querySelectorAll('slot[name="host-controls"]')).toHaveLength(1);
+  });
+
+  it('opens on the kebab button and closes when it is pressed again', async () => {
+    await mount();
+    expect(isOpen()).toBe(false);
+    expect(trigger().getAttribute('aria-expanded')).toBe('false');
+
+    trigger().click();
+    await el.updateComplete;
+    expect(isOpen()).toBe(true);
+    expect(trigger().getAttribute('aria-expanded')).toBe('true');
+
+    trigger().click();
+    await el.updateComplete;
+    expect(isOpen()).toBe(false);
+  });
+
+  it('closes on an outside click and on Escape', async () => {
+    await mount();
+
+    trigger().click();
+    await el.updateComplete;
+    document.body.dispatchEvent(new Event('pointerdown', { bubbles: true, composed: true }));
+    await el.updateComplete;
+    expect(isOpen()).toBe(false);
+
+    trigger().click();
+    await el.updateComplete;
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await el.updateComplete;
+    expect(isOpen()).toBe(false);
+  });
+
+  it('stays open when the click lands inside the panel', async () => {
+    await mount();
+    trigger().click();
+    await el.updateComplete;
+
+    const themeButton = el.shadowRoot!.querySelector<HTMLButtonElement>('button.theme-toggle')!;
+    themeButton.dispatchEvent(new Event('pointerdown', { bubbles: true, composed: true }));
+    themeButton.click();
+    await el.updateComplete;
+
+    expect(el.theme).toBe('light');
+    expect(isOpen()).toBe(true);
+  });
+
+  it('drops its document listeners when the game is removed', async () => {
+    await mount();
+    trigger().click();
+    await el.updateComplete;
+
+    const removeSpy = vi.spyOn(document, 'removeEventListener');
+    el.remove();
+    const removed = removeSpy.mock.calls.map((c) => c[0]);
+    expect(removed).toContain('pointerdown');
+    expect(removed).toContain('keydown');
+    removeSpy.mockRestore();
   });
 });

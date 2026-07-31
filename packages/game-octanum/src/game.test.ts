@@ -490,7 +490,7 @@ describe('og-octanum oynanış', () => {
     expect(rounds[0].target).toBe(rounds[1].target);
   });
 
-  it('seviye ilerledikçe süre kısalır', async () => {
+  it('süre her seviyede aynı kalır (90 sn)', async () => {
     const limitAt = async (level: number) => {
       const game = createGame();
       game.levelCount = 8;
@@ -510,7 +510,10 @@ describe('og-octanum oynanış', () => {
       return limit;
     };
 
-    expect(await limitAt(1)).toBeGreaterThan(await limitAt(8));
+    // Süre artık bir zorluk kolu değil: ilk ve son seviye aynı baskıyı
+    // taşır, zorluk formülün uzunluğuyla ölçülür (bkz. round.ts).
+    expect(await limitAt(1)).toBe(90_000);
+    expect(await limitAt(8)).toBe(90_000);
   });
 
   it('seviyeler modunda tur kolaydan zora doğru uzar', async () => {
@@ -541,7 +544,7 @@ describe('og-octanum oynanış', () => {
     expect(curve[curve.length - 1]).toBe(5);
   });
 
-  it('serbest modda sabit orta zorlukla (120 sn) oynanır', async () => {
+  it('serbest modda sabit orta zorlukla (90 sn) oynanır', async () => {
     const limits = new Set<number>();
     const stepCounts = new Set<number>();
     for (const seed of [1, 2, 3, 4, 5]) {
@@ -558,7 +561,7 @@ describe('og-octanum oynanış', () => {
     }
     // Süre de zorluk da tur tur değişmez: orta bantta sabittir.
     expect([...limits]).toEqual([FREE_MODE_TIME_MS]);
-    expect(FREE_MODE_TIME_MS).toBe(120_000);
+    expect(FREE_MODE_TIME_MS).toBe(90_000);
     expect([...stepCounts]).toEqual([stepsFor(RANDOM_MODE_DIFFICULTY)]);
   });
 

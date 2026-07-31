@@ -1,6 +1,7 @@
 {
   "name": "@octapull-games/game-octanum",
   "version": "1.0.0",
+  "license": "MIT",
   "private": true,
   "main": "src/index.ts",
   "scripts": {

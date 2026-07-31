@@ -216,6 +216,8 @@ describe('generateRound', () => {
     const [hardLo, hardHi] = targetRangeFor(1);
     expect(hardLo).toBeGreaterThan(easyLo);
     expect(hardHi).toBeGreaterThan(easyHi);
-    expect(timeLimitFor(1)).toBeLessThan(timeLimitFor(0));
+    // Sure artik bir zorluk kolu degil: her zorlukta 90 saniye.
+    expect(timeLimitFor(0)).toBe(90_000);
+    expect(timeLimitFor(1)).toBe(timeLimitFor(0));
   });
 });

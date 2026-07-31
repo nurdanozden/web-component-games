@@ -132,7 +132,6 @@ Tüm renk/tipografi değerleri `--og-*` değişkenlerinden okunur ve host bunlar
 sektörleri ayıran sur (rampart) çizgilerinin rengi (koyu temada varsayılan
 neon camgöbeği `#6fe3ff`). Dışa açılan `part`'lar:
 `hud`, `theme-toggle`, `board`, `modal`, `button`. Sektör dolgu renkleri, bulmacanın ayrılmaz
-`hud`, `board`, `modal`, `button`. Sektör dolgu renkleri, bulmacanın ayrılmaz
 bir parçası olduğu için altın-açı (golden-angle) hue dizisiyle programatik
 üretilir ve her iki temada da okunur.
 
@@ -150,11 +149,16 @@ bir parçası olduğu için altın-açı (golden-angle) hue dizisiyle programati
 ```
 
 > Not: Bu bileşen, girdi property'sini kök README sözleşmesindeki (§3.1) adla,
-> yani `state` olarak açar (game-octapus ile aynı). Depodaki bazı eski oyunlar
-> (`game-ornek`, `game-hafiza`) bunu `gameState` olarak adlandırır; host
-> entegrasyonunda paketin kullandığı ada dikkat edin.
+> yani `state` olarak açar; depodaki bütün oyunlar aynı adı kullanır.
 
 ## Kullanılan Üçüncü Taraf Varlıklar
-Yok — kule ve sur işaretleri Unicode karakterlerdir (🏰, ✕, 🏆); ses efektleri
+Bileşenin kendisinde yok — kule ve sur işaretleri Unicode karakterlerdir (🏰, ✕, 🏆); ses efektleri
 Web Audio API osilatörleriyle programatik üretilir, harici ses dosyası
 kullanılmaz.
+
+**Yazı tipi (yalnızca demo sayfası):** `demo/index.html`, gösterim amacıyla
+[Inter](https://fonts.google.com/specimen/Inter) yazı tipini Google Fonts
+üzerinden yükler; lisansı **SIL Open Font License 1.1**'dir (ticari kullanım
+dahil serbest, atıf zorunluluğu yoktur). Yazı tipi pakete dâhil edilmez ve
+bileşenin çalışması için gerekli değildir: bileşen `--og-font` değişkenini okur,
+host sayfa hangi yazı tipini verirse onu kullanır.

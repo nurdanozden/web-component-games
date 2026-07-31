@@ -4,10 +4,11 @@ import {
   GameState,
   LevelResult,
   Localized,
+  SettingsMenuController,
   i18nStyles,
-  renderLanguagePicker,
+  renderSettingsMenu,
+  settingsMenuStyles,
 } from '@octapull-games/core';
-import { GameState, LevelResult } from '@octapull-games/core';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -228,34 +229,38 @@ function regionHue(region: number): number {
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export class OctafortGame extends Localized(LitElement) {
-  static styles = [i18nStyles, css`
-export class OctafortGame extends LitElement {
-  static styles = css`
+  static styles = [i18nStyles, settingsMenuStyles, css`
     *, *::before, *::after { box-sizing: border-box; }
 
     :host {
       /* Internal themed palette. The public --og-* variables always win when
          the host page sets them; these only supply theme-aware fallbacks so
          the component looks right in a light or dark modal with zero config. */
-      /* Midnight Slate — soft deep navy, no pure black, no neon glow. */
-      --_bg: #1e293b;        /* card */
-      --_surface: #0f172a;   /* grid, inset a step deeper than the card */
-      --_text: #f8fafc;
-      --_text-dim: #94a3b8;
+      /* Octameet greys — the component is embedded in Octameet's right-hand
+         "Uygulamalar" panel, so the dark theme sits in the same neutral family
+         as that panel. Surfaces separate by getting *lighter* than the base,
+         not darker, which is what keeps the card readable inside the panel. */
+      --_bg: #404040;        /* card — matches the Octameet panel base */
+      --_surface: #515151;   /* grid, one step lighter than the card */
+      --_text: #ffffff;
+      --_text-dim: #dedede;
       --_wall: #06d3f7;      /* sector ramparts — turquoise */
-      --_wall: #64748b;      /* sector ramparts — soft slate, not neon */
-      --_border: #334155;
+      --_border: #5c5c5c;
       --_shadow: 0 20px 25px -5px rgba(0,0,0,.4), 0 8px 10px -6px rgba(0,0,0,.3);
-      --_line: rgba(255,255,255,.10);
-      --_fill: rgba(255,255,255,.06);
-      --_fill-soft: rgba(255,255,255,.03);
-      --_fill-strong: rgba(255,255,255,.10);
-      --_grid-line: rgba(148,163,184,.14);
-      --_dot: rgba(148,163,184,.32);
+      --_line: #5c5c5c;
+      --_fill: #5c5c5c;        /* buttons, chips, secondary surfaces */
+      --_fill-soft: #515151;
+      --_track: #363636;   /* cukur yuzey: ilerleme cubugu izi.
+                              Vurgu dolgusu #5c5c5c iz uzerinde 2.2:1'e
+                              dusuyordu; koyu iz onu 3.9:1'e cikarir. */
+      --_fill-strong: #6b6b6b; /* hover/active — one step above --_fill so the
+                                  state stays visible on a flat palette */
+      --_grid-line: rgba(255,255,255,.16);
+      --_dot: rgba(255,255,255,.38);
 
       /* Accents are shared by both themes (Octapull orange + soft sapphire). */
       --_primary: #3b82f6;
-      --_accent: #ff5b00;
+      --_accent: #ff5f00;   /* Octameet turuncusu */
 
       display: block;
       box-sizing: border-box;
@@ -280,14 +285,13 @@ export class OctafortGame extends LitElement {
       --_text: #0f172a;
       --_text-dim: #8daec1;
       --_wall: #03d3f8;
-      --_text-dim: #64748b;
-      --_wall: #94a3b8;
       --_border: #e2e8f0;
       --_shadow: 0 20px 25px -5px rgba(15,23,42,.08), 0 8px 10px -6px rgba(15,23,42,.04);
       --_line: rgba(15,23,42,.10);
       --_fill: rgba(15,23,42,.05);
       --_fill-soft: rgba(15,23,42,.03);
       --_fill-strong: rgba(15,23,42,.07);
+      --_track: rgba(15,23,42,.05);
       --_grid-line: rgba(15,23,42,.10);
       --_dot: rgba(15,23,42,.26);
     }
@@ -327,9 +331,6 @@ export class OctafortGame extends LitElement {
     .theme-toggle:active { transform: scale(.92); }
     .theme-toggle:focus-visible { outline: 3px solid var(--og-accent, var(--_accent)); outline-offset: 2px; }
 
-      gap: .5rem;
-      margin-bottom: .7rem;
-    }
     .level-chip {
       font-size: .7rem;
       font-weight: 700;
@@ -341,7 +342,6 @@ export class OctafortGame extends LitElement {
       border-radius: 999px;
       white-space: nowrap;
     }
-    .hud-actions { display: flex; gap: .4rem; }
     button.ghost {
       cursor: pointer;
       border: 1px solid var(--_line);
@@ -360,14 +360,14 @@ export class OctafortGame extends LitElement {
     .progress-track {
       height: 10px;
       border-radius: 999px;
-      background: var(--_fill);
+      background: var(--_track, var(--_fill));
       overflow: hidden;
       margin-bottom: .9rem;
     }
     .progress-fill {
       height: 100%;
       border-radius: inherit;
-      background: linear-gradient(90deg, var(--og-accent, var(--_accent)), var(--og-primary, var(--_primary)));
+      background: var(--og-accent, var(--_accent));
       transition: width .25s ease;
     }
 
@@ -491,7 +491,9 @@ export class OctafortGame extends LitElement {
     .overlay .emoji { font-size: 3rem; }
     /* Başlangıç ekranında da tema düğmesi ve host düğmeleri aynı yerde dursun;
        oyun başlayınca aynı slot HUD'a taşınır, düğmeler yerinden oynamaz. */
-    .overlay-top { display: flex; justify-content: center; align-items: center; gap: .4rem; flex-wrap: wrap; }
+    /* Ayar düğmesi açılış ekranında da HUD'daki yerinde durur: oyuncu tek bir
+       köşeyi öğrenir, ekran değişince aramak zorunda kalmaz. */
+    .overlay-top { display: flex; justify-content: flex-end; align-items: center; }
     .legend {
       display: flex;
       gap: 1.1rem;
@@ -513,9 +515,11 @@ export class OctafortGame extends LitElement {
       align-items: center;
       justify-content: center;
       border-radius: inherit;
-      background: rgba(4, 10, 20, .58);
+      background: rgba(26, 26, 26, .58);
       backdrop-filter: blur(3px);
-      z-index: 5;
+      /* Kart içindeki her şeyin üstünde: açık kalmış ayar menüsü (z-index 60)
+         tur biterken sonuç penceresinin önüne geçmemeli. */
+      z-index: 999;
       padding: 1.5rem;
       animation: fadeIn .25s ease;
     }
@@ -548,14 +552,12 @@ export class OctafortGame extends LitElement {
       min-width: 92px;
       padding: .7rem .9rem;
       border-radius: 14px;
-      background: linear-gradient(160deg, var(--_fill-strong), var(--_fill-soft));
+      background: var(--_fill);
       border: 1px solid var(--_line);
       animation: popIn .35s cubic-bezier(.34,1.56,.64,1) both;
     }
-    .stat-card.is-best {
-      border-color: var(--og-accent, var(--_accent));
-      box-shadow: 0 0 0 1px var(--og-accent, var(--_accent)), 0 0 18px rgba(255,91,0,.3);
-    }
+    /* Rekor, süre kartını turuncu çerçeveyle işaretlemek yerine yalnızca
+       aşağıdaki "🌟 Yeni rekor" rozetiyle duyurulur — iki kart aynı kalır. */
     .stat-card:nth-child(2) { animation-delay: .08s; }
     .stat-icon { font-size: 1.3rem; line-height: 1; }
     .stat-value {
@@ -563,10 +565,7 @@ export class OctafortGame extends LitElement {
       font-weight: 800;
       line-height: 1.1;
       font-variant-numeric: tabular-nums;
-      background: linear-gradient(135deg, var(--og-accent, var(--_accent)), var(--og-primary, var(--_primary)));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+      color: var(--og-text, var(--_text));
     }
     .stat-label {
       font-size: .65rem;
@@ -594,10 +593,6 @@ export class OctafortGame extends LitElement {
       transition: transform .15s, filter .15s;
     }
     button.btn-primary:hover { filter: brightness(1.1); }
-      background: linear-gradient(135deg, var(--og-primary, var(--_primary)), var(--og-accent, var(--_accent)));
-      color: #fff;
-      transition: transform .15s;
-    }
     button.btn-primary:active { transform: scale(.97); }
     button.btn-primary:focus-visible { outline: 3px solid var(--og-accent, var(--_accent)); outline-offset: 2px; }
 
@@ -616,7 +611,6 @@ export class OctafortGame extends LitElement {
       .overlay, .modal-backdrop, .modal-card, .stat-card { animation: none; }
     }
   `];
-  `;
 
   // ─── Public API (contract) ─────────────────────────────────────────────
   @property({ type: String }) mode: 'levels' | 'random' = 'levels';
@@ -650,6 +644,7 @@ export class OctafortGame extends LitElement {
   private _winTimer = 0;
   private _focusPending = false;
   private _ctx: AudioContext | null = null;
+  private _settings = new SettingsMenuController(this);
 
   private _onVisibility = () => {
     if (document.hidden) {
@@ -853,7 +848,6 @@ export class OctafortGame extends LitElement {
     clearTimeout(this._winTimer);
     this._phase = 'winning';
     this._announce = this.t('octafort.announceWin');
-    this._announce = 'Tüm kuleler yerleştirildi, güvende!';
     this._playTone('win');
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     this._winTimer = window.setTimeout(() => this._handleWin(), reduced ? 0 : WIN_ANIMATION_MS);
@@ -895,7 +889,6 @@ export class OctafortGame extends LitElement {
 
     this._phase = 'won';
     this._announce = this.t(isGameComplete ? 'common.announceAllDone' : 'common.announceLevelDone');
-    this._announce = isGameComplete ? 'Tüm seviyeler tamamlandı!' : 'Seviye tamamlandı!';
     if (isGameComplete) this._dispatch('og-game-complete', { gameId: GAME_ID, totalMs: this._totalPlayMs });
   }
 
@@ -973,19 +966,19 @@ export class OctafortGame extends LitElement {
   }
 
   // ─── Render ──────────────────────────────────────────────────────────────
-  private _renderThemeToggle() {
-    const isLight = this.theme === 'light';
-    return html`
-      <button
-        class="theme-toggle"
-        part="theme-toggle"
-        type="button"
-        @click=${this._toggleTheme}
-        aria-pressed=${isLight.toString()}
-        aria-label=${this.t(isLight ? 'common.switchToDark' : 'common.switchToLight')}
-        title=${this.t(isLight ? 'common.themeDarkTitle' : 'common.themeLightTitle')}
-      >${isLight ? '☀️' : '🌙'} ${this.t(isLight ? 'common.themeLight' : 'common.themeDark')}</button>
-    `;
+  /**
+   * Dil, tema ve host sayfanın kendi düğmeleri (mod, ses) üst barda yan yana
+   * durmak yerine sağ üstteki üç nokta düğmesinin altında toplanır. Açılış
+   * ekranı ile HUD aynı bileşeni kullanır.
+   */
+  private _renderSettings() {
+    return renderSettingsMenu({
+      locale: this.locale,
+      open: this._settings.open,
+      onTrigger: this._settings.toggle,
+      theme: this.theme,
+      onThemeToggle: () => this._toggleTheme(),
+    });
   }
 
   private _renderHUD() {
@@ -998,28 +991,18 @@ export class OctafortGame extends LitElement {
     return html`
       <div class="hud" part="hud">
         <div class="hud-group">
-          ${renderLanguagePicker(this.locale)}
-          ${this._renderThemeToggle()}
-          <slot name="host-controls"></slot>
-        </div>
-        <div class="hud-group">
           <div class="level-chip">
             ${levelText} · ${this._size}×${this._size} · ${m}:${s}
           </div>
+        </div>
+        <div class="hud-group">
           <button
             class="ghost"
             part="button"
             @click=${this._resetBoard}
             aria-label=${this.t('octafort.resetAria')}
           >${this.t('octafort.reset')}</button>
-    return html`
-      <div class="hud" part="hud">
-        <div class="level-chip">
-          ${this.mode === 'levels' ? html`Seviye ${this._currentLevel}/${this.levelCount}` : html`Serbest Mod`}
-          · ${this._size}×${this._size} · ${m}:${s}
-        </div>
-        <div class="hud-actions">
-          <button class="ghost" part="button" @click=${this._resetBoard} aria-label="Tahtayı temizle">Sıfırla</button>
+          ${this._renderSettings()}
         </div>
       </div>
     `;
@@ -1035,7 +1018,6 @@ export class OctafortGame extends LitElement {
         aria-valuemin="0"
         aria-valuemax="100"
         aria-label=${this.t('octafort.progress')}
-        aria-label="Yerleştirilen kuleler"
       >
         <div class="progress-fill" style="width:${pct}%"></div>
       </div>
@@ -1083,9 +1065,6 @@ export class OctafortGame extends LitElement {
       const label =
         this.t('octafort.cellPos', { row: r + 1, col: c + 1, region: region + 1 }) +
         ' ' + this.t(stateKey);
-      const label =
-        `Satır ${r + 1}, sütun ${c + 1}, sektör ${region + 1}. ` +
-        (v === TOWER ? (isConflict ? 'Kule — kural ihlali.' : 'Kule.') : v === MARK ? 'Sur işareti.' : 'Boş.');
 
       cells.push(html`
         <button
@@ -1104,14 +1083,12 @@ export class OctafortGame extends LitElement {
 
     return html`
       <div class="board-wrap ltr-lock">
-      <div class="board-wrap">
         <div class="board">
           <div
             part="board"
             class="grid ${this._shaking ? 'shake' : ''}"
             role="grid"
             aria-label=${this.t('octafort.boardAria', { n })}
-            aria-label="Octafort tahtası, ${n} çarpı ${n}. Bir hücreye dokunmak sırayla sur, kule ve boş durumları arasında geçiş yaptırır. Ok tuşlarıyla gezinip Boşluk ile değiştir."
             style="grid-template-columns:repeat(${n}, 1fr);"
             @keydown=${(e: KeyboardEvent) => this._handleKey(e)}
           >
@@ -1124,11 +1101,7 @@ export class OctafortGame extends LitElement {
 
   private _renderIdle() {
     return html`
-      <div class="overlay-top">
-        ${renderLanguagePicker(this.locale)}
-        ${this._renderThemeToggle()}
-        <slot name="host-controls"></slot>
-      </div>
+      <div class="overlay-top">${this._renderSettings()}</div>
       <div class="overlay">
         <div class="emoji">🏰</div>
         <h2>${this.t('octafort.title')}</h2>
@@ -1144,19 +1117,6 @@ export class OctafortGame extends LitElement {
           @click=${this._startLevel}
           aria-label=${this.t('common.startAria')}
         >${this.t('common.start')}</button>
-      <div class="overlay">
-        <div class="emoji">🏰</div>
-        <h2>Octafort</h2>
-        <p>
-          Her satıra, sütuna ve renkli güvenlik bölgelerine tam olarak bir
-          Kale yerleştir. Kaleler sınır komşusu olamaz (çapraz bile!).
-        </p>
-        <div class="legend">
-          <span>🏰 Kule</span>
-          <span>✕ Sur (eleme)</span>
-        </div>
-        <p style="opacity:.55;font-size:.8rem">Dokun: Sur → Kule → Boş</p>
-        <button class="btn-primary" part="button" @click=${this._startLevel} aria-label="Oyunu başlat">Başla</button>
       </div>
     `;
   }
@@ -1173,20 +1133,17 @@ export class OctafortGame extends LitElement {
       : this.mode === 'random'
         ? `${this.t('common.newBoard')} ${this.arrow}`
         : `${this.t('common.continue')} ${this.arrow}`;
-    const label = isGameComplete ? 'Tekrar Oyna' : this.mode === 'random' ? 'Yeni Bölüm →' : 'Devam →';
 
     return html`
       <div class="modal-backdrop">
         <div class="modal-card" part="modal">
           <div class="emoji">${isGameComplete ? '🏆' : '🏰'}</div>
           <h2>${this.t(isGameComplete ? 'common.congrats' : 'octafort.safe')}</h2>
-          <h2>${isGameComplete ? 'Tebrikler!' : 'Güvende!'}</h2>
           <div class="stats-row">
-            <div class="stat-card ${this._lastResultIsBest ? 'is-best' : ''}">
+            <div class="stat-card">
               <span class="stat-icon">⏱️</span>
               <span class="stat-value">${m}:${s}</span>
               <span class="stat-label">${this.t('common.time')}</span>
-              <span class="stat-label">Süre</span>
             </div>
             <div class="stat-card">
               <span class="stat-icon">👆</span>
@@ -1195,10 +1152,6 @@ export class OctafortGame extends LitElement {
             </div>
           </div>
           ${this._lastResultIsBest ? html`<div class="best-badge">🌟 ${this.t('common.newRecord')}</div>` : nothing}
-              <span class="stat-label">Hamle</span>
-            </div>
-          </div>
-          ${this._lastResultIsBest ? html`<div class="best-badge">🌟 Yeni Rekor!</div>` : nothing}
           <button class="btn-primary" part="button" @click=${this._nextLevel} aria-label=${label}>${label}</button>
         </div>
       </div>
