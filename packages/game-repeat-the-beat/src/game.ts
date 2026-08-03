@@ -157,7 +157,7 @@ export class RepeatTheBeat extends LitElement {
   top:50%;
   z-index:5;
 
-  width:150px;
+  width:150px; 
   height:150px;
 
   display:flex;
@@ -223,11 +223,8 @@ export class RepeatTheBeat extends LitElement {
 .start-button {
 
   margin-top: 10px;
-
   padding: 14px 28px;
-
   border:none;
-
   border-radius:12px;
 
   cursor:pointer;
@@ -239,13 +236,10 @@ export class RepeatTheBeat extends LitElement {
   );
 
   color:white;
-
   font-size:1rem;
-
   font-weight:700;
 
   transition:all .2s ease;
-
 }
 
 .start-button:hover{
@@ -255,6 +249,115 @@ export class RepeatTheBeat extends LitElement {
     box-shadow:
     0 10px 20px rgba(0,0,0,.25);
 
+}
+
+/* ==========================================================
+   GAME OVER MODAL
+========================================================== */
+
+.game-over-overlay {
+  position: fixed;
+  inset: 0;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background: rgba(0, 0, 0, 0.45);
+
+  z-index: 999;
+}
+
+.game-over-card {
+  width: 320px;
+
+  background: white;
+
+  border-radius: 20px;
+
+  padding: 32px;
+
+  text-align: center;
+
+  box-shadow: 0 20px 50px rgba(0,0,0,.25);
+
+  animation: popup .25s ease;
+}
+
+.game-over-card h2 {
+  margin: 0 0 24px;
+
+  font-size: 2rem;
+
+  color: #ff5252;
+}
+
+.game-over-card p {
+  margin: 10px 0 6px;
+
+  color: #666;
+
+  text-transform: uppercase;
+
+  letter-spacing: 1px;
+
+  font-size: .9rem;
+}
+
+.game-over-card strong {
+  display: block;
+
+  font-size: 2rem;
+
+  margin-bottom: 18px;
+
+  color: #222;
+}
+
+.game-over-card .start-button {
+  margin-top: 10px;
+  width: 100%;
+}
+
+/* ==========================================================
+   GAME OVER ACTIONS
+========================================================== */
+
+.game-over-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.game-over-actions .start-button {
+  flex: 1;
+  margin-top: 0;
+}
+
+.secondary-button {
+  flex: 1;
+
+  padding: 14px;
+
+  border: none;
+
+  border-radius: 12px;
+
+  cursor: pointer;
+
+  background: #e5e7eb;
+
+  color: #333;
+
+  font-size: 1rem;
+
+  font-weight: 600;
+
+  transition: all .2s ease;
+}
+
+.secondary-button:hover {
+  background: #d1d5db;
 }
 
 /* ==========================================================
@@ -288,6 +391,20 @@ export class RepeatTheBeat extends LitElement {
     animation:flash .45s ease;
 
 }
+
+@keyframes popup {
+
+  from {
+    transform: scale(.8);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+}
 `;
 
 // ==========================================================
@@ -316,7 +433,7 @@ export class RepeatTheBeat extends LitElement {
   @state() private isPlayerTurn = false;
   @state() private level = 1;
 
-  private _flashTimeouts = new Map<HTMLElement, number>();
+  private readonly flashTimeouts = new Map<HTMLElement, number>();
 
 // ==========================================================
 // Game Configuration
@@ -328,14 +445,30 @@ private readonly FLASH_GAP = 350;
 
 private readonly START_DELAY = 500;
 
+private readonly BEST_SCORE_KEY = 'repeat-the-beat-best-score';
+
+private readonly COLORS: readonly PadColor[] = [
+  'blue',
+  'green',
+  'red',
+  'yellow',
+];
+
 // ==========================================================
 // Lifecycle Methods
 // ==========================================================
 
   connectedCallback() {
     super.connectedCallback();
+
     if (this.gameState) {
       this.level = this.gameState.currentLevel;
+    }
+
+    const savedBestScore = localStorage.getItem(this.BEST_SCORE_KEY);
+
+    if (savedBestScore !== null) {
+      this.bestScore = Number(savedBestScore);
     }
     
     // Dispatch ready event
@@ -349,25 +482,31 @@ private readonly START_DELAY = 500;
   }
 
 // ==========================================================
-// Game Events
-// ==========================================================
-
-// ==========================================================
 // Game Logic
 // ==========================================================
 
-private async startGame() {
-  
+private resetGame() {
+
   this.level = 1;
 
   this.score = 0;
 
   this.playerIndex = 0;
 
+  this.sequence = [];
+
+  this.isPlayerTurn = false;
+
+  this.status = 'idle';
+
+}
+
+private async startGame() {
+  
+  this.resetGame();
+
   this.status = 'watching';
 
-  // Reset sequence at new game start and build first sequence
-  this.sequence = [];
   this.generateSequence(this.getSequenceLength());
 
   await this.wait(this.START_DELAY);
@@ -378,8 +517,6 @@ private async startGame() {
 
 private generateSequence(length: number) {
 
-  const colors: PadColor[] = ['blue', 'green', 'red', 'yellow'];
-
   const rand = () => {
     try {
       if (typeof crypto !== 'undefined' && 'getRandomValues' in crypto) {
@@ -387,7 +524,9 @@ private generateSequence(length: number) {
         (crypto as any).getRandomValues(arr);
         return arr[0] / 0xffffffff;
       }
-    } catch (_) {}
+    } catch (_) {
+        // Fallback to Math.random()
+    }
     return Math.random();
   };
 
@@ -401,7 +540,9 @@ private generateSequence(length: number) {
       if (result[i] === last) lastRun++; else break;
     }
 
-    const validColors = colors.filter(c => !(c === last && lastRun >= maxConsecutive));
+    const validColors = this.COLORS.filter(
+      c => !(c === last && lastRun >= maxConsecutive)
+    );
     const chosenColor = validColors[Math.floor(rand() * validColors.length)];
 
     result.push(chosenColor);
@@ -425,7 +566,7 @@ private flashPad(color: PadColor) {
 
   if (!button) return;
 
-  const prevTimeout = this._flashTimeouts.get(button);
+  const prevTimeout = this.flashTimeouts.get(button);
   if (prevTimeout) {
     window.clearTimeout(prevTimeout);
   }
@@ -436,10 +577,10 @@ private flashPad(color: PadColor) {
 
   const timeoutId = window.setTimeout(() => {
     button.classList.remove('flash');
-    this._flashTimeouts.delete(button);
+    this.flashTimeouts.delete(button);
   }, this.FLASH_DURATION);
 
-  this._flashTimeouts.set(button, timeoutId);
+  this.flashTimeouts.set(button, timeoutId);
 
 }
 
@@ -494,21 +635,14 @@ private async showSequence() {
   }
 
   this.status = 'playerTurn';
-
-    this.isPlayerTurn = true;
+  this.isPlayerTurn = true;
 }
   
 private async handlePadClick(color: PadColor) {
 
-  if (this.status !== 'playerTurn') {
+  if (!this.isPlayerTurn) {
     return;
   }
-
-  console.log({
-  sequence: this.sequence,
-  playerIndex: this.playerIndex,
-  clicked: color,
-  });
 
   this.flashPad(color);
 
@@ -536,7 +670,13 @@ private async handlePadClick(color: PadColor) {
 
     if (this.score > this.bestScore) {
       this.bestScore = this.score;
-    }
+
+      localStorage.setItem(
+        this.BEST_SCORE_KEY,
+        this.bestScore.toString()
+    );
+
+}
 
     this.isPlayerTurn = false;
 
@@ -580,10 +720,12 @@ private async handlePadClick(color: PadColor) {
 
     <button
       class="color-pad blue"
+      ?disabled=${!this.isPlayerTurn}
       @click=${() => this.handlePadClick('blue')}
 ></button>
     <button
       class="color-pad green"
+      ?disabled=${!this.isPlayerTurn}
       @click=${() => this.handlePadClick('green')}
 ></button>
 
@@ -596,25 +738,70 @@ private async handlePadClick(color: PadColor) {
 
     <button
       class="color-pad yellow"
+      ?disabled=${!this.isPlayerTurn}
       @click=${() => this.handlePadClick('yellow')}
 ></button>
     <button
       class="color-pad red"
+      ?disabled=${!this.isPlayerTurn}
       @click=${() => this.handlePadClick('red')}
 ></button>
 
   </div>
 
   <div class="status">
-    <strong>Status</strong>
-    <p>${this.getStatusText()}</p>
-  </div>
+  <strong>Status</strong>
+  <p>${this.getStatusText()}</p>
+</div>
 
-  <button class="start-button" @click=${this.startGame}>
-    ${this.status === 'gameOver'
-      ? 'Play Again'
-      : 'Start Game'}
-  </button>
+${this.status === 'idle'
+  ? html`
+      <button
+        class="start-button"
+        @click=${this.startGame}
+      >
+        Start Game
+      </button>
+    `
+  : null}
+
+${this.status === 'gameOver'
+  ? html`
+      <div class="game-over-overlay">
+
+        <div class="game-over-card">
+
+          <h2>Game Over</h2>
+
+          <p>Final Score</p>
+          <strong>${this.score}</strong>
+
+          <p>Best Score</p>
+          <strong>${this.bestScore}</strong>
+
+          <div class="game-over-actions">
+
+            <button
+              class="secondary-button"
+              @click=${this.resetGame}
+            >
+              Back to Start
+            </button>
+
+            <button
+              class="start-button"
+              @click=${this.startGame}
+            >
+              Play Again
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+    `
+  : null}
 
 </div>
   `;
